@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Windows;
 using System.Windows.Input;
 using Yeondo.Models;
 using Yeondo.Services;
@@ -39,12 +38,12 @@ public class MainViewModel : INotifyPropertyChanged
         if (!string.IsNullOrEmpty(_settings.LastTargetFolder))
             TargetFolder = _settings.LastTargetFolder;
 
-        // Путь к файлу логов
-        _logFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "yeondo-app",
-            "logs",
-            $"symlink_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        // Путь к файлу логов — рядом с исполняемым файлом
+        var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
+        if (!Directory.Exists(logsDir))
+            Directory.CreateDirectory(logsDir);
+        
+        _logFilePath = Path.Combine(logsDir, $"symlink_{DateTime.Now:yyyyMMdd_HHmmss}.log");
     }
 
     public ObservableCollection<LinkItem> Items { get; } = [];
@@ -235,9 +234,9 @@ public class MainViewModel : INotifyPropertyChanged
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show(
-                    string.Format(_localization.Resources.CreateTargetFolderError, ex.Message), 
+                    string.Format(_localization.Resources.CreateTargetFolderError, ex.Message),
                     _localization.Resources.ErrorTitle,
-                    System.Windows.MessageBoxButton.OK, 
+                    System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
                 IsBusy = false;
                 return;
@@ -290,7 +289,7 @@ public class MainViewModel : INotifyPropertyChanged
         // Завершение лога
         logLines.Add("");
         logLines.Add($"=== Итог: Успешно {_successCount}, Ошибок {_errorCount} ===");
-        
+
         // Сохраняем лог
         try
         {
@@ -315,7 +314,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         else
         {
-            StatusText = string.Format(_localization.Resources.CreatedCount, _successCount) + 
+            StatusText = string.Format(_localization.Resources.CreatedCount, _successCount) +
                         string.Format(_localization.Resources.FailedCount, _errorCount);
             HasErrors = true;
         }

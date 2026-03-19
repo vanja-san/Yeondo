@@ -1,9 +1,8 @@
 ﻿using System.Windows;
-using System.Windows.Input;
-using DragEventArgs = System.Windows.DragEventArgs;
+using Yeondo.Services;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
-using Yeondo.Services;
+using DragEventArgs = System.Windows.DragEventArgs;
 
 namespace Yeondo;
 
@@ -12,10 +11,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        
+
         // Установка DataContext после инициализации локализации
         DataContext = new ViewModels.MainViewModel(LocalizationService.Instance);
-        
+
         // Применение локализации к окну
         ApplyLocalization();
     }
@@ -23,7 +22,7 @@ public partial class MainWindow : Window
     private void ApplyLocalization()
     {
         var loc = LocalizationService.Instance.Resources;
-        
+
         // Заголовок окна
         Title = loc.AppTitle;
     }

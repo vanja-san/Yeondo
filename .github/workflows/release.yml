@@ -1,0 +1,77 @@
+name: Build Release
+
+on:
+  workflow_dispatch:  # Ручной запуск из вкладки Actions
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.10.5)'
+        required: true
+        default: '1.10.5'
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore "yeondo-app/yeondo-app.csproj"
+    
+    - name: Build
+      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore
+    
+    - name: Publish
+      run: dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-build -p:Version=${{ github.event.inputs.version }}
+    
+    - name: Create Release Archive
+      shell: pwsh
+      run: |
+        $publishDir = "yeondo-app/bin/Release/net10.0-windows/win-x64/publish"
+        $zipName = "Yeondo-${{ github.event.inputs.version }}.zip"
+        
+        # Создаём ZIP архив
+        Compress-Archive -Path "$publishDir\*" -DestinationPath "$zipName" -Force
+        
+        # Создаём папку для артефактов
+        New-Item -ItemType Directory -Force -Path "release"
+        
+        # Копируем архив
+        Move-Item -Path "$zipName" -Destination "release/$zipName" -Force
+        
+        # Копируем документацию
+        Copy-Item -Path "README.md" -Destination "release/" -Force
+        Copy-Item -Path "README.ru.md" -Destination "release/" -Force
+        
+        Write-Host "Created: $zipName"
+        Write-Host "Files in release folder:"
+        Get-ChildItem -Path "release" | ForEach-Object { Write-Host "  - $($_.Name)" }
+    
+    - name: Upload Release Asset
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release/Yeondo-${{ github.event.inputs.version }}.zip
+        tag_name: v${{ github.event.inputs.version }}
+        name: Yeondo v${{ github.event.inputs.version }}
+        body: ${{ github.event.inputs.release_notes }}
+        draft: true  # Создаётся как черновик
+        generate_release_notes: true  # Автогенерация заметок из коммитов
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload Build Artifact (optional)
+      uses: actions/upload-artifact@v4
+      with:
+        name: Yeondo-${{ github.event.inputs.version }}
+        path: yeondo-app/bin/Release/net10.0-windows/win-x64/publish/
+        retention-days: 30

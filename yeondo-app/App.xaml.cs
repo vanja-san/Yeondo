@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows;
 using Yeondo.Services;
 
@@ -22,11 +21,11 @@ namespace Yeondo
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            
+
             // Проверка на запуск второго экземпляра
             bool createdNew;
             _mutex = new Mutex(true, MutexName, out createdNew);
-            
+
             if (!createdNew)
             {
                 // Активируем существующее окно
@@ -40,14 +39,14 @@ namespace Yeondo
                         break;
                     }
                 }
-                
+
                 // Завершаем второй экземпляр
                 _mutex?.ReleaseMutex();
                 _mutex?.Dispose();
                 Shutdown();
                 return;
             }
-            
+
             // Инициализация локализации
             LocalizationService.Instance.Initialize();
         }

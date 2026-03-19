@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.IO;
-using System.Windows;
 
 namespace Yeondo.Services;
 
@@ -50,7 +49,7 @@ public class LocalizationService
     {
         _resources = new LocalizationModel();
         _currentLanguage = "en"; // Язык по умолчанию
-        
+
         // Путь к папке i18n рядом с исполняемым файлом
         var baseDir = AppContext.BaseDirectory;
         _i18nPath = Path.Combine(baseDir, "i18n");
@@ -92,7 +91,7 @@ public class LocalizationService
     private void LoadLocalization(string language)
     {
         var filePath = Path.Combine(_i18nPath, $"{language}.json");
-        
+
         if (File.Exists(filePath))
         {
             try

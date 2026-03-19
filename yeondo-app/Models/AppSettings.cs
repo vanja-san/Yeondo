@@ -1,6 +1,3 @@
-using System.IO;
-using System.Text.Json;
-
 namespace Yeondo.Models;
 
 /// <summary>
@@ -13,8 +10,7 @@ public class AppSettings
     public bool CreateForDirectories { get; set; } = true;
 
     private static readonly string SettingsPath = System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "yeondo-app",
+        AppContext.BaseDirectory,
         "settings.json");
 
     public static AppSettings Load()
@@ -38,10 +34,6 @@ public class AppSettings
     {
         try
         {
-            var directory = System.IO.Path.GetDirectoryName(SettingsPath);
-            if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
-                System.IO.Directory.CreateDirectory(directory);
-
             var json = System.Text.Json.JsonSerializer.Serialize(this, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             System.IO.File.WriteAllText(SettingsPath, json);
         }
