@@ -31,6 +31,9 @@ settings.json
 i18n/
 logs/
 
+# Release notes
+RELEASE_NOTES.md
+
 # Test results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*

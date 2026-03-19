@@ -8,6 +8,11 @@ on:
         required: true
         default: '1.10.5'
 
+permissions:
+  contents: write  # Required for creating releases and reading repository contents
+  issues: write    # Required for mentioning issues in release notes
+  pull-requests: write  # Required for mentioning PRs in release notes
+
 jobs:
   build:
     runs-on: windows-latest
@@ -60,7 +65,7 @@ jobs:
         tag_name: v${{ github.event.inputs.version }}
         name: Yeondo v${{ github.event.inputs.version }}
         draft: true  # Создаётся как черновик
-        generate_release_notes: true  # Автогенерация заметок из коммитов
+        generate_release_notes: true  # Автогенерация с использованием .github/release.yml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     

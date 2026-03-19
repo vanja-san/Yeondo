@@ -1,0 +1,28 @@
+# Конфигурация для автоматических release notes
+# https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - dependabot
+  categories:
+    - title: 🎉 Новые возможности
+      labels:
+        - enhancement
+        - feature
+    - title: 🐛 Исправления
+      labels:
+        - bug
+        - fix
+    - title: ⚡ Оптимизации
+      labels:
+        - performance
+        - optimization
+    - title: 📝 Документация
+      labels:
+        - documentation
+    - title: 🔄 Другие изменения
+      labels:
+        - "*"
