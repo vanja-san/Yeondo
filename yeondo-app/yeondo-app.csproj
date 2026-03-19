@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>Yeondo</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    
+    <!-- Разрешить небезопасный код для LibraryImport -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    
+    <!-- Иконка приложения -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+
+	<!-- Имя выходного файла без .App -->
+	<AssemblyName>Yeondo</AssemblyName>
+	<RootNamespace>Yeondo</RootNamespace>
+	
+	<!-- Информация о приложении (для свойств файла) -->
+	<AssemblyTitle>Yeondo - Symbolic Link Creator</AssemblyTitle>
+	<AssemblyDescription>Утилита для массового создания символических ссылок (Symbolic/Junction/HardLink)</AssemblyDescription>
+	<AssemblyCopyright>Copyright © 2026 vanja-san</AssemblyCopyright>
+	<AssemblyCompany>vanja-san</AssemblyCompany>
+	<AssemblyProduct>Yeondo</AssemblyProduct>
+	<AssemblyVersion>1.10.5.0</AssemblyVersion>
+	<FileVersion>1.10.5.0</FileVersion>
+	<InformationalVersion>1.10.5</InformationalVersion>
+	
+	<!-- Метаданные для Win32 ресурса версии -->
+	<Version>1.10.5.0</Version>
+	<NeutralLanguage>ru-RU</NeutralLanguage>
+	<Copyright>Copyright © 2026 vanja-san</Copyright>
+    
+    <!-- Оптимизации для уменьшения размера (без обрезки для WPF) -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    
+    <!-- Готовые к запуску скомпилированные сборки -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    
+    <!-- Оптимизации IL -->
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+    
+    <!-- Уменьшение размера -->
+    <StripSymbols>true</StripSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+</Project>
