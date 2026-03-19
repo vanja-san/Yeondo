@@ -54,6 +54,9 @@ jobs:
         Copy-Item -Path "README.md" -Destination "release/" -Force
         Copy-Item -Path "README.ru.md" -Destination "release/" -Force
         
+        # Копируем release notes для использования в описании
+        Copy-Item -Path "RELEASE_NOTES.md" -Destination "release/" -Force
+        
         Write-Host "Created: $zipName"
         Write-Host "Files in release folder:"
         Get-ChildItem -Path "release" | ForEach-Object { Write-Host "  - $($_.Name)" }
@@ -64,8 +67,7 @@ jobs:
         files: release/Yeondo-${{ github.event.inputs.version }}.zip
         tag_name: v${{ github.event.inputs.version }}
         name: Yeondo v${{ github.event.inputs.version }}
-        draft: true  # Создаётся как черновик
-        generate_release_notes: true  # Автогенерация с использованием .github/release.yml
+        draft: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
