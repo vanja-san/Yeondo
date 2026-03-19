@@ -46,6 +46,14 @@ Run `Yeondo.exe`
 
 4. **Click "Create"**
 
+---
+
+## 📸 Screenshots
+
+_Screenshots will be added soon._
+
+---
+
 ## 📖 Link Types
 
 | Type | For | Features |

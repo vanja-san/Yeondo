@@ -40,23 +40,20 @@ jobs:
       run: |
         $publishDir = "yeondo-app/bin/Release/net10.0-windows/win-x64/publish"
         $zipName = "Yeondo-${{ github.event.inputs.version }}.zip"
-        
+
         # Создаём ZIP архив
         Compress-Archive -Path "$publishDir\*" -DestinationPath "$zipName" -Force
-        
+
         # Создаём папку для артефактов
         New-Item -ItemType Directory -Force -Path "release"
-        
+
         # Копируем архив
         Move-Item -Path "$zipName" -Destination "release/$zipName" -Force
-        
+
         # Копируем документацию
         Copy-Item -Path "README.md" -Destination "release/" -Force
         Copy-Item -Path "README.ru.md" -Destination "release/" -Force
-        
-        # Копируем release notes для использования в описании
-        Copy-Item -Path "RELEASE_NOTES.md" -Destination "release/" -Force
-        
+
         Write-Host "Created: $zipName"
         Write-Host "Files in release folder:"
         Get-ChildItem -Path "release" | ForEach-Object { Write-Host "  - $($_.Name)" }
