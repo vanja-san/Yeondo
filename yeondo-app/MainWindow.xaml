@@ -144,12 +144,14 @@
                             <Setter Property="Text" Value="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.SelectPath}" />
                             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                             <Setter Property="Cursor" Value="Arrow" />
+                            <Setter Property="ToolTipService.IsEnabled" Value="False" />
                             <Style.Triggers>
                                 <!-- Путь выбран -->
                                 <DataTrigger Binding="{Binding TargetFolder, Converter={StaticResource StringHasValueToVisibilityConverter}}" Value="Visible">
                                     <Setter Property="Text" Value="{Binding TargetFolder}" />
                                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                                     <Setter Property="Cursor" Value="Hand" />
+                                    <Setter Property="ToolTipService.IsEnabled" Value="True" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>

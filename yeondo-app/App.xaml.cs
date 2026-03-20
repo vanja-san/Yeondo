@@ -9,6 +9,7 @@ namespace Yeondo
     {
         private static Mutex? _mutex;
         private const string MutexName = "Yeondo-SymLink-Creator-SingleInstance";
+        private static bool _isPrimaryInstance;
 
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
@@ -40,21 +41,34 @@ namespace Yeondo
                     }
                 }
 
-                // Завершаем второй экземпляр
-                _mutex?.ReleaseMutex();
+                // Завершаем второй экземпляр (не освобождаем мьютекс, т.к. не захватывали его)
+                _isPrimaryInstance = false;
                 _mutex?.Dispose();
+                _mutex = null;
                 Shutdown();
                 return;
             }
 
+            _isPrimaryInstance = true;
             // Инициализация локализации
             LocalizationService.Instance.Initialize();
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
-            _mutex?.ReleaseMutex();
-            _mutex?.Dispose();
+            if (_isPrimaryInstance && _mutex != null)
+            {
+                try
+                {
+                    _mutex.ReleaseMutex();
+                    _mutex.Dispose();
+                }
+                catch (ApplicationException)
+                {
+                    // Игнорируем, если мьютекс уже освобождён
+                }
+            }
+            _mutex = null;
             base.OnExit(e);
         }
     }
