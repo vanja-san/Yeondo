@@ -2,7 +2,7 @@
 
 Простое и удобное приложение для массового создания символических ссылок в Windows.
 
-![Версия](https://img.shields.io/badge/версия-1.10.5-blue)
+![Версия](https://img.shields.io/badge/версия-1.10.7-blue)
 ![.NET](https://img.shields.io/badge/.NET-10-purple)
 ![Платформа](https://img.shields.io/badge/платформа-Windows%20x64-lightgrey)
 
@@ -85,6 +85,30 @@ _Скриншоты будут добавлены в ближайшее врем
 
 Вы можете отредактировать эти файлы для изменения текстов интерфейса.
 
+### Добавление своего языка
+
+Чтобы добавить свой язык:
+
+1. Создайте файл `i18n/{код}.json` (например, `fr.json` для французского)
+2. Скопируйте структуру из `en.json`
+3. Переведите значения
+
+**Пример (fr.json):**
+```json
+{
+  "AppTitle": "Yeondo - Créateur de liens symboliques",
+  "AddFilesTooltip": "Ajouter des fichiers",
+  "CreateButton": "Créer",
+  "OutputPathLabel": "Chemin de sortie",
+  "SelectPath": "Non sélectionné",
+  ...
+}
+```
+
+**Необходимые ключи:** `AppTitle`, `AddFilesTooltip`, `AddFoldersTooltip`, `CreateButton`, `OutputPathLabel`, `SelectPath`, `BrowseButton`, `BrowseTooltip`, `ClearButton`, `LogsButton`, `ReadyStatus`, `CreatedCount`, `FailedCount`, `SuccessMessage`, `RemoveMenuItem`, `OpenFolderTooltip`, `SelectFilesTitle`, `SelectFoldersTitle`, `SelectTargetTitle`, `ErrorTitle`, `CreateTargetFolderError`, `LinkTypeSymbolic`, `LinkTypeJunction`, `LinkTypeHardLink`, `LinkTypeUnknown`, `LogHeader`, `LogTargetFolder`, `LogItemCount`, `LogSuccess`, `LogError`, `LogSummary`
+
+---
+
 ## ❓ Устранение неполадок
 
 ### Ошибка при создании Hard Link
@@ -128,13 +152,19 @@ _Скриншоты будут добавлены в ближайшее врем
 
 **Все файлы приложения (настройки, локализация, логи) создаются рядом с исполняемым файлом** — никаких системных папок!
 
+## ⚠️ Отказ от ответственности
+
+Приложение предоставляется «как есть» без каких-либо гарантий. Автор не несёт ответственности за любые убытки или потерю данных, возникшие в результате использования этого программного обеспечения. Всегда создавайте резервные копии важных данных перед созданием символических ссылок.
+
 ## 📄 Лицензия
 
 Copyright © 2026 vanja-san. Все права защищены.
 
-## 📬 Обратная связь
+**Код написан при содействии Qwen Code (AI Assistant)**
 
-По вопросам и предложениям обращайтесь к разработчику.
+## 🙏 Благодарности
+
+- **[Qwen Code](https://github.com/QwenLM/qwen-code)** — AI-ассистент, который помог написать это приложение
 
 ---
 

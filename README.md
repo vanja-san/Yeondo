@@ -2,7 +2,7 @@
 
 A simple and convenient utility for mass creation of symbolic links in Windows.
 
-![Version](https://img.shields.io/badge/version-1.10.5-blue)
+![Version](https://img.shields.io/badge/version-1.10.7-blue)
 ![.NET](https://img.shields.io/badge/.NET-10-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-lightgrey)
 
@@ -75,8 +75,8 @@ _Screenshots will be added soon._
 
 The application automatically detects the system language:
 
-- **English** — for all other languages
 - **Russian** — if system language is Russian
+- **English** — for all other languages
 
 Localization files are stored in the `i18n/` folder next to the executable:
 
@@ -84,6 +84,30 @@ Localization files are stored in the `i18n/` folder next to the executable:
 - `en.json` — English language
 
 You can edit these files to customize interface texts.
+
+### Adding a Custom Language
+
+To add your own language:
+
+1. Create a file `i18n/{code}.json` (e.g., `fr.json` for French)
+2. Copy the structure from `en.json`
+3. Translate the values
+
+**Example (fr.json):**
+```json
+{
+  "AppTitle": "Yeondo - Créateur de liens symboliques",
+  "AddFilesTooltip": "Ajouter des fichiers",
+  "CreateButton": "Créer",
+  "OutputPathLabel": "Chemin de sortie",
+  "SelectPath": "Non sélectionné",
+  ...
+}
+```
+
+**Required keys:** `AppTitle`, `AddFilesTooltip`, `AddFoldersTooltip`, `CreateButton`, `OutputPathLabel`, `SelectPath`, `BrowseButton`, `BrowseTooltip`, `ClearButton`, `LogsButton`, `ReadyStatus`, `CreatedCount`, `FailedCount`, `SuccessMessage`, `RemoveMenuItem`, `OpenFolderTooltip`, `SelectFilesTitle`, `SelectFoldersTitle`, `SelectTargetTitle`, `ErrorTitle`, `CreateTargetFolderError`, `LinkTypeSymbolic`, `LinkTypeJunction`, `LinkTypeHardLink`, `LinkTypeUnknown`, `LogHeader`, `LogTargetFolder`, `LogItemCount`, `LogSuccess`, `LogError`, `LogSummary`
+
+---
 
 ## ❓ Troubleshooting
 
@@ -128,13 +152,19 @@ To view logs, click the **"Logs"** button in the status bar (appears when errors
 
 **All application files (settings, localization, logs) are created next to the executable** — no system folders!
 
+## ⚠️ Disclaimer
+
+This application is provided "as is" without any warranties. The author is not responsible for any damages or data losses resulting from the use of this software. Always backup important data before creating symbolic links.
+
 ## 📄 License
 
 Copyright © 2026 vanja-san. All rights reserved.
 
-## 📬 Contact
+**Code written with assistance from Qwen Code (AI Assistant)**
 
-For questions and suggestions, please contact the developer.
+## 🙏 Acknowledgements
+
+- **[Qwen Code](https://github.com/QwenLM/qwen-code)** — AI coding assistant that helped write this application
 
 ---
 
