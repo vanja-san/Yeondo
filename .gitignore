@@ -23,6 +23,9 @@ bld/
 # Visual Studio Code
 .vscode/
 
+# Qwen
+.qwen/
+
 # Rider
 .idea/
 

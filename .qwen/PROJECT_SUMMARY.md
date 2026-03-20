@@ -1,99 +1,314 @@
-The user wants me to create a comprehensive project summary based on the conversation history. Let me analyze what was accomplished in this session:
+# Yeondo — Project Summary
 
-1. The user wanted to modify an existing WPF application for creating symbolic links
-2. Multiple changes were made to the UI and functionality
-3. A significant amount of time was spent fixing ContextMenu command binding issues
+## 📌 Overall Goal
 
-Key points from the conversation:
-1. WPF + .NET 10 + custom dark theme
-2. MVVM pattern with folders: ViewModels/, Models/, Converters/
-3. User preferences for compact UI, dark theme, Segoe Fluent Icons
-4. Link types: Symbolic, Junction, HardLink
-5. Win32 API calls for creating links
+Разработка компактного портативного WPF-приложения для массового создания символических ссылок (Symbolic/Junction/HardLink) на Windows с современным UI в стиле Windows 11.
 
-Recent changes in this session:
-1. Removed "Open Folder" button
-2. Made the path text clickable to open folder
-3. Added context menu for list items with "Remove from list" option
-4. Spent significant time fixing ContextMenu command binding (multiple approaches tried)
+---
 
-Let me write this summary in Russian as per the user's language preference.# Project Summary
+## 🛠️ Technology Stack
 
-## Overall Goal
-Разработка компактного WPF-приложения для массового создания символических ссылок (Symbolic/Junction/HardLink) на Windows с современным UI в тёмной теме.
+| Component | Version / Technology |
+|-----------|---------------------|
+| **Framework** | .NET 10 |
+| **UI** | WPF + Fluent Design |
+| **Language** | C# 13 |
+| **Architecture** | MVVM |
+| **Win32 API** | P/Invoke (LibraryImport) |
+| **Styles** | Windows 11 Fluent Design |
 
-## Key Knowledge
-- **Стек**: WPF + .NET 10 + Windows Forms (для диалогов)
-- **Архитектура**: MVVM с папками `ViewModels/`, `Models/`, `Converters/`
-- **Пользовательские предпочтения**:
-  - Компактное окно 400×500 без изменения размера (`ResizeMode="NoResize"`)
-  - Тёмная тема с кастомными цветами
-  - Segoe Fluent Icons для всех иконок через `{StaticResource SymbolThemeFontFamily}`
-  - ComboBox для выбора типа ссылки
-  - Drag-n-drop файлов/папок
-  - Сохранение настроек в `%LOCALAPPDATA%\yeondo-app\settings.json`
-  - Логирование в `%LOCALAPPDATA%\yeondo-app\logs\symlink_*.log`
-- **Сборка**: `dotnet build "M:\User\Dev\.visualstudio\yeondo-app\yeondo-app\yeondo-app.csproj"`
-- **Запуск**: `dotnet run --project yeondo-app`
-- **LinkType**: `Symbolic` (по умолчанию), `Junction`, `HardLink`
-- **Win32 API**: `CreateSymbolicLinkW`, `CreateHardLinkW`
+---
 
-## Recent Actions
-1. **[DONE]** Удалена кнопка "Открыть папку" из блока целевой папки
-2. **[DONE]** Сделан кликабельным текст пути — при нажатии открывается папка в проводнике (через `MouseBinding` с `OpenTargetCommand`)
-3. **[DONE]** Добавлено контекстное меню для элементов списка с пунктом "Удалить из списка"
-4. **[FIXED]** Исправлена привязка команды контекстного меню через `Tag` свойство:
-   - `ContentPresenter.Tag` сохраняет `DataContext` (MainViewModel) через `ElementName=ItemsControlInstance`
-   - Команда в меню: `Command="{Binding Tag.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ContentPresenter}}"`
-   - Параметр: `CommandParameter="{Binding}"` (текущий LinkItem)
-5. **[ADDED]** Метод `RemoveItem(LinkItem item)` в `MainViewModel` для удаления элементов
+## 📁 Project Structure
 
-## Current Plan
-1. [DONE] Создать ViewModel с логикой создания ссылок
-2. [DONE] Реализовать MainWindow с компактным UI
-3. [DONE] Добавить ComboBox для выбора типа ссылки
-4. [DONE] Реализовать логирование и кнопку "Детали"
-5. [DONE] Исправить все ошибки сборки и выполнения
-6. [DONE] Настроить отображение иконок файлов/папок в списке
-7. [DONE] Сделать кнопку "Создать" визуально неактивной при пустом списке
-8. [DONE] Добавить контекстное меню для удаления элементов
-9. [TODO] Протестировать создание всех типов ссылок
-10. [TODO] Добавить индикатор прогресса для каждой ссылки отдельно
-
-## Known Issues
-- Кнопка "Детали" появляется только при ошибках
-- Hard Link работает только для файлов на одном томе NTFS
-- Junction работает только для папок
-- Приложение блокирует .exe файл во время работы
-
-## Technical Notes: ContextMenu Binding
-Проблема: `ContextMenu` не в визуальном дереве, поэтому обычная привязка `DataContext` не работает.
-
-**Рабочее решение** (использовано в проекте):
-```xaml
-<ItemsControl x:Name="ItemsControlInstance" ItemsSource="{Binding Items}">
-    <ItemsControl.ItemContainerStyle>
-        <Style TargetType="ContentPresenter">
-            <Setter Property="Tag" Value="{Binding DataContext, ElementName=ItemsControlInstance}" />
-            <Setter Property="ContextMenu">
-                <Setter.Value>
-                    <ContextMenu>
-                        <MenuItem Command="{Binding Tag.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ContentPresenter}}"
-                                  CommandParameter="{Binding}" />
-                    </ContextMenu>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </ItemsControl.ItemContainerStyle>
-</ItemsControl>
+```
+yeondo-app/
+├── .github/
+│   ├── workflows/
+│   │   └── release.yml       # GitHub Actions для релизов
+│   └── release.yml           # Конфигурация release notes
+│
+├── .gitignore
+├── README.md                 # Документация (English)
+├── README.ru.md              # Документация (Russian)
+├── DEVELOPMENT.md            # Для разработчиков (English)
+├── DEVELOPMENT.ru.md         # Для разработчиков (Russian)
+├── RELEASE_NOTES.md          # Шаблон описания релиза
+│
+└── yeondo-app/
+    ├── App.xaml(.cs)         # Точка входа, Single Instance
+    ├── MainWindow.xaml(.cs)  # Главное окно
+    ├── AssemblyInfo.cs       # Метаданные сборки
+    │
+    ├── ViewModels/
+    │   └── MainViewModel.cs  # Основная логика
+    │
+    ├── Models/
+    │   ├── LinkItem.cs       # Модель элемента
+    │   └── AppSettings.cs    # Настройки
+    │
+    ├── Converters/
+    │   ├── Converters.cs     # Конвертеры значений
+    │   └── LocConverter.cs   # Конвертер локализации
+    │
+    ├── Services/
+    │   └── LocalizationService.cs  # Локализация
+    │
+    ├── Assets/
+    │   └── app.ico           # Иконка приложения
+    │
+    └── yeondo-app.csproj
 ```
 
 ---
 
-## Summary Metadata
-**Update time**: 2026-03-18
+## ✨ Features
+
+### Link Creation
+- **Symbolic Link** — универсальные ссылки (файлы + папки)
+- **Junction** — только для папок
+- **Hard Link** — только для файлов (NTFS, один том)
+
+### User Interface
+- Компактное окно 400×500 (`ResizeMode="NoResize"`)
+- Windows 11 Fluent Design
+- Segoe Fluent Icons
+- Drag & Drop файлов/папок
+- Контекстное меню для элементов
+
+### Localization
+- Автоматическое определение языка (ru/en)
+- JSON файлы в папке `i18n/`
+- `ru.json` — русский, `en.json` — английский
+
+### Portable Design
+- **Все файлы рядом с исполняемым:**
+  - `settings.json` — настройки
+  - `i18n/` — локализация
+  - `logs/` — логи
+- Никаких системных папок
+
+### Single Instance
+- Только один экземпляр приложения
+- Повторный запуск активирует существующее окно
+
+---
+
+## 🔧 Build & Publish
+
+### Commands
+
+```bash
+# Сборка
+dotnet build "yeondo-app/yeondo-app.csproj"
+
+# Запуск
+dotnet run --project "yeondo-app/yeondo-app.csproj"
+
+# Публикация
+dotnet publish "yeondo-app/yeondo-app.csproj" -c Release
+```
+
+### Publish Settings (.csproj)
+
+```xml
+<PublishSingleFile>true</PublishSingleFile>
+<SelfContained>true</SelfContained>
+<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+<PublishReadyToRun>true</PublishReadyToRun>
+<DebugType>none</DebugType>
+<StripSymbols>true</StripSymbols>
+<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+```
+
+### Output
+
+| Type | Size | Requires .NET |
+|------|------|---------------|
+| Self-contained | ~66 МБ | ❌ No |
+| Framework-dependent | ~200 КБ | ✅ Yes |
+
+---
+
+## 🏗️ Architecture
+
+### MVVM Pattern
+
+```
+View (MainWindow.xaml)
+    │
+    │ Bindings / Commands
+    ▼
+ViewModel (MainViewModel)
+    │
+    │ Data Access
+    ▼
+Model (LinkItem, AppSettings)
+```
+
+### Key Components
+
+**MainViewModel:**
+- `Items` — коллекция элементов
+- `TargetFolder` — целевая папка
+- `SelectedLinkType` — тип ссылки
+- `CreateLinks()` — создание ссылок
+- `AddFiles()`, `AddFolders()` — добавление
+- `RemoveItem()` — удаление
+
+**LinkItem:**
+- `SourcePath` — путь к файлу/папке
+- `IsDirectory` — является ли папкой
+- `Status` — Pending/InProgress/Success/Error
+- `ErrorMessage` — сообщение об ошибке
+
+**LocalizationService:**
+- Определение языка системы
+- Загрузка JSON файлов
+- Создание файлов по умолчанию
+
+---
+
+## 🔌 Win32 API
+
+### LibraryImport (современный P/Invoke)
+
+```csharp
+[System.Runtime.InteropServices.LibraryImport("kernel32.dll", 
+    SetLastError = true, 
+    StringMarshalling = System.Runtime.InteropServices.StringMarshalling.Utf16, 
+    EntryPoint = "CreateSymbolicLinkW")]
+[return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+private static partial bool CreateSymbolicLinkNative(...);
+```
+
+### Flags
+
+```csharp
+SYMBOLIC_LINK_FLAG_FILE = 0
+SYMBOLIC_LINK_FLAG_DIRECTORY = 1
+SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 2
+```
+
+---
+
+## 🌐 Localization
+
+### Files Location
+```
+./i18n/ru.json
+./i18n/en.json
+```
+
+### Auto Detection
+```csharp
+var culture = CultureInfo.CurrentUICulture;
+_currentLanguage = culture.TwoLetterISOLanguageName == "ru" ? "ru" : "en";
+```
+
+---
+
+## 📝 Logging
+
+### Location
+```
+./logs/symlink_ГГГГММДД_ЧЧММСС.log
+```
+
+### Format
+```
+=== Создание символических ссылок [19.03.2026 12:00:00] ===
+Целевая папка: C:\Links
+Элементов: 5
+
+[OK] C:\file.txt -> C:\Links\file.txt
+[ERROR] C:\folder -> Access denied
+
+=== Итог: Успешно 4, Ошибок 1 ===
+```
+
+---
+
+## 🚀 GitHub Actions Release
+
+### Workflow: `.github/workflows/release.yml`
+
+```yaml
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number'
+        required: true
+        default: '1.10.5'
+```
+
+### Steps
+1. Checkout code
+2. Setup .NET 10
+3. Restore & Build
+4. Publish (Release, single file)
+5. Create ZIP archive
+6. Upload to GitHub Releases
+
+### Usage
+1. Actions → Build Release → Run workflow
+2. Enter version: `1.10.5`
+3. Run workflow
+4. Release created with ZIP + Full Changelog
+
+---
+
+## ✅ Completed Tasks
+
+- [x] MVVM архитектура
+- [x] Создание всех типов ссылок
+- [x] Drag & Drop
+- [x] Локализация (ru/en)
+- [x] Single Instance
+- [x] Контекстное меню
+- [x] Индикаторы прогресса
+- [x] Логирование
+- [x] Портативный дизайн
+- [x] GitHub Actions workflow
+- [x] Документация (4 файла)
+- [x] Оптимизации (LibraryImport, Primary Constructors)
+
+---
+
+## 📊 Project Metrics
+
+| Metric | Value |
+|--------|-------|
+| Lines of code | ~1500 |
+| Files | ~15 |
+| Classes | ~10 |
+| Publish size | 66 МБ |
+| Launch time | < 1 сек |
+
+---
+
+## 📄 Documentation Files
+
+| File | Language | Purpose |
+|------|----------|---------|
+| `README.md` | EN | User guide |
+| `README.ru.md` | RU | Руководство пользователя |
+| `DEVELOPMENT.md` | EN | Developer docs |
+| `DEVELOPMENT.ru.md` | RU | Документация разработчика |
+| `RELEASE_NOTES.md` | EN | Release template |
+
+---
+
+## 📜 License
+
+Copyright © 2026 vanja-san. All rights reserved.
 
 ---
 
 ## Summary Metadata
-**Update time**: 2026-03-18T14:10:02.883Z 
+
+**Last Updated:** 2026-03-19  
+**Version:** 1.10.5  
+**Status:** Ready for Release

@@ -116,7 +116,7 @@ public class MainViewModel : INotifyPropertyChanged
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Multiselect = true,
-            Title = _localization.Resources.SelectFilesTitle
+            Title = _localization.GetString(LocalizationService.Keys.SelectFilesTitle)
         };
 
         if (dialog.ShowDialog() == true)
@@ -140,7 +140,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog
         {
-            Title = _localization.Resources.SelectFoldersTitle,
+            Title = _localization.GetString(LocalizationService.Keys.SelectFoldersTitle),
             Multiselect = true
         };
 
@@ -165,7 +165,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog
         {
-            Title = _localization.Resources.SelectTargetTitle,
+            Title = _localization.GetString(LocalizationService.Keys.SelectTargetTitle),
             DefaultDirectory = TargetFolder
         };
 
@@ -211,9 +211,9 @@ public class MainViewModel : INotifyPropertyChanged
         // Начинаем лог
         var logLines = new List<string>
         {
-            $"=== Создание символических ссылок [{DateTime.Now:dd.MM.yyyy HH:mm:ss}] ===",
-            $"Целевая папка: {TargetFolder}",
-            $"Элементов: {Items.Count}",
+            string.Format(_localization.GetString(LocalizationService.Keys.LogHeader), DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")),
+            string.Format(_localization.GetString(LocalizationService.Keys.LogTargetFolder), TargetFolder),
+            string.Format(_localization.GetString(LocalizationService.Keys.LogItemCount), Items.Count),
             ""
         };
 
@@ -234,8 +234,8 @@ public class MainViewModel : INotifyPropertyChanged
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show(
-                    string.Format(_localization.Resources.CreateTargetFolderError, ex.Message),
-                    _localization.Resources.ErrorTitle,
+                    string.Format(_localization.GetString(LocalizationService.Keys.CreateTargetFolderError), ex.Message),
+                    _localization.GetString(LocalizationService.Keys.ErrorTitle),
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
                 IsBusy = false;
@@ -260,21 +260,21 @@ public class MainViewModel : INotifyPropertyChanged
                     LinkType.Symbolic => CreateSymbolicLink(item, linkPath),
                     LinkType.Junction => CreateJunctionLink(item, linkPath),
                     LinkType.HardLink => CreateHardLink(item, linkPath),
-                    _ => (false, "Неизвестный тип ссылки")
+                    _ => (false, _localization.GetString(LocalizationService.Keys.LinkTypeUnknown))
                 };
 
                 if (result)
                 {
                     item.Status = LinkItem.LinkStatus.Success;
                     _successCount++;
-                    logLines.Add($"[OK] {item.SourcePath} -> {linkPath}");
+                    logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogSuccess), item.SourcePath, linkPath));
                 }
                 else
                 {
                     item.Status = LinkItem.LinkStatus.Error;
                     item.ErrorMessage = error;
                     _errorCount++;
-                    logLines.Add($"[ERROR] {item.SourcePath} -> {error}");
+                    logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogError), item.SourcePath, error));
                 }
             }
             catch (Exception ex)
@@ -282,13 +282,13 @@ public class MainViewModel : INotifyPropertyChanged
                 item.Status = LinkItem.LinkStatus.Error;
                 item.ErrorMessage = ex.Message;
                 _errorCount++;
-                logLines.Add($"[ERROR] {item.SourcePath} -> {ex.Message}");
+                logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogError), item.SourcePath, ex.Message));
             }
         }
 
         // Завершение лога
         logLines.Add("");
-        logLines.Add($"=== Итог: Успешно {_successCount}, Ошибок {_errorCount} ===");
+        logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogSummary), _successCount, _errorCount));
 
         // Сохраняем лог
         try
@@ -309,13 +309,13 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (_errorCount == 0)
         {
-            StatusText = string.Format(_localization.Resources.CreatedCount, _successCount);
+            StatusText = string.Format(_localization.GetString(LocalizationService.Keys.CreatedCount), _successCount);
             HasErrors = false;
         }
         else
         {
-            StatusText = string.Format(_localization.Resources.CreatedCount, _successCount) +
-                        string.Format(_localization.Resources.FailedCount, _errorCount);
+            StatusText = string.Format(_localization.GetString(LocalizationService.Keys.CreatedCount), _successCount) +
+                        string.Format(_localization.GetString(LocalizationService.Keys.FailedCount), _errorCount);
             HasErrors = true;
         }
         SummaryText = string.Empty;

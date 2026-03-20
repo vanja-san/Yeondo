@@ -22,6 +22,7 @@
         <converters:DetailsVisibilityConverter x:Key="DetailsVisibilityConverter" />
         <converters:FileNameConverter x:Key="FileNameConverter" />
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+        <converters:StringHasValueToVisibilityConverter x:Key="StringHasValueToVisibilityConverter" />
         <converters:SourceIconConverter x:Key="SourceIconConverter" />
         <converters:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter" />
         <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
@@ -132,26 +133,27 @@
                            FontSize="12"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
 
-                <!-- Путь (кликабельный) -->
+                <!-- Путь (кликабельный только если выбран) -->
                 <TextBlock Grid.Row="1" Grid.Column="0"
                            FontSize="12"
-                           Cursor="Hand"
                            TextTrimming="CharacterEllipsis"
                            TextWrapping="NoWrap">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
+                            <!-- Путь не выбран -->
                             <Setter Property="Text" Value="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.SelectPath}" />
                             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <Setter Property="Cursor" Value="Arrow" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding TargetFolder}" Value="">
-                                    <Setter Property="Text" Value="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.SelectPath}" />
+                                <!-- Путь выбран -->
+                                <DataTrigger Binding="{Binding TargetFolder, Converter={StaticResource StringHasValueToVisibilityConverter}}" Value="Visible">
+                                    <Setter Property="Text" Value="{Binding TargetFolder}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <Setter Property="Cursor" Value="Hand" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </TextBlock.Style>
-                    <TextBlock.Text>
-                        <Binding Path="TargetFolder" FallbackValue="" />
-                    </TextBlock.Text>
                     <TextBlock.InputBindings>
                         <MouseBinding MouseAction="LeftClick" Command="{Binding OpenTargetCommand}" />
                     </TextBlock.InputBindings>
