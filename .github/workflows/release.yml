@@ -1,7 +1,7 @@
 name: Build Release
 
 on:
-  workflow_dispatch:  # Ручной запуск из вкладки Actions
+  workflow_dispatch:
     inputs:
       version:
         description: 'Version number (e.g., 1.10.6)'
@@ -9,65 +9,107 @@ on:
         default: '1.10.6'
 
 permissions:
-  contents: write  # Required for creating releases and reading repository contents
-  issues: write    # Required for mentioning issues in release notes
-  pull-requests: write  # Required for mentioning PRs in release notes
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+      with:
+        fetch-depth: 0  # Fetch all history for changelog
+
     - name: Setup .NET 10
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
-    
+
     - name: Restore dependencies
       run: dotnet restore "yeondo-app/yeondo-app.csproj"
-    
+
     - name: Build
       run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore
-    
+
     - name: Publish
       run: dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-build -p:Version=${{ github.event.inputs.version }}
-    
+
     - name: Create Release Archive
       shell: pwsh
       run: |
         $publishDir = "yeondo-app/bin/Release/net10.0-windows/win-x64/publish"
         $zipName = "Yeondo-${{ github.event.inputs.version }}.zip"
 
-        # Создаём ZIP архив
         Compress-Archive -Path "$publishDir\*" -DestinationPath "$zipName" -Force
 
-        # Создаём папку для артефактов
         New-Item -ItemType Directory -Force -Path "release"
 
-        # Копируем архив
         Move-Item -Path "$zipName" -Destination "release/$zipName" -Force
 
-        # Копируем документацию
         Copy-Item -Path "README.md" -Destination "release/" -Force
         Copy-Item -Path "README.ru.md" -Destination "release/" -Force
 
         Write-Host "Created: $zipName"
         Write-Host "Files in release folder:"
         Get-ChildItem -Path "release" | ForEach-Object { Write-Host "  - $($_.Name)" }
-    
+
+    - name: Get Previous Tag
+      id: previous_tag
+      shell: pwsh
+      run: |
+        $currentTag = "v${{ github.event.inputs.version }}"
+        $previousTag = git describe --tags --abbrev=0 HEAD^ 2>$null
+        if ($previousTag) {
+          Write-Host "Previous tag: $previousTag"
+          echo "tag=$previousTag" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "No previous tag found, will use all commits"
+          echo "tag=" >> $env:GITHUB_OUTPUT
+        }
+
+    - name: Generate Changelog
+      id: changelog
+      shell: pwsh
+      run: |
+        $currentTag = "v${{ github.event.inputs.version }}"
+        $previousTag = "${{ steps.previous_tag.outputs.tag }}"
+        
+        if ($previousTag) {
+          Write-Host "Generating changelog from $previousTag to $currentTag"
+          $changelog = git log "$previousTag..HEAD" --pretty=format:"- %s (%h)" --reverse | Out-String
+        } else {
+          Write-Host "Generating changelog for all commits"
+          $changelog = git log --pretty=format:"- %s (%h)" --reverse | Out-String
+        }
+        
+        # Escape special characters for GitHub Actions output
+        $changelog = $changelog -replace '%', '%25' -replace '`n', '%0A'
+        
+        echo "changelog<<EOF" >> $env:GITHUB_OUTPUT
+        echo $changelog >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v2
       with:
         files: release/Yeondo-${{ github.event.inputs.version }}.zip
         tag_name: v${{ github.event.inputs.version }}
         name: Yeondo v${{ github.event.inputs.version }}
+        body: |
+          ## Changes since ${{ steps.previous_tag.outputs.tag || 'initial release' }}
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ---
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.previous_tag.outputs.tag || '' }}...v${{ github.event.inputs.version }}
         draft: false
+        generate_release_notes: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
     - name: Upload Build Artifact (optional)
       uses: actions/upload-artifact@v4
       with:
