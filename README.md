@@ -50,7 +50,9 @@ Run `Yeondo.exe`
 
 ## 📸 Screenshots
 
-_Screenshots will be added soon._
+<img width="248" alt="Main" src="https://github.com/user-attachments/assets/daa8ea4a-2874-4397-9223-e10f1ea9279f" /> 
+<img width="248" alt="List" src="https://github.com/user-attachments/assets/23ce2ecd-0df2-4e20-9174-091f6b51249d" />
+<img width="248" alt="Status" src="https://github.com/user-attachments/assets/10e117ab-6012-4337-ab32-94064cd5b2d1" />
 
 ---
 
