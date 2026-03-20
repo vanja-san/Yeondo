@@ -4,9 +4,9 @@ on:
   workflow_dispatch:  # Ручной запуск из вкладки Actions
     inputs:
       version:
-        description: 'Version number (e.g., 1.10.5)'
+        description: 'Version number (e.g., 1.10.6)'
         required: true
-        default: '1.10.5'
+        default: '1.10.6'
 
 permissions:
   contents: write  # Required for creating releases and reading repository contents
