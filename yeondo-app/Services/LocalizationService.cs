@@ -40,6 +40,11 @@ public class LocalizationModel
     public string LogSuccess { get; set; } = "[OK] {0} -> {1}";
     public string LogError { get; set; } = "[ERROR] {0} -> {1}";
     public string LogSummary { get; set; } = "=== Итог: Успешно {0}, Ошибок {1} ===";
+    public string JunctionFolderOnly { get; set; } = "Junction работает только с папками";
+    public string JunctionSourceRequired { get; set; } = "Источник должен существовать для Junction";
+    public string HardLinkFilesOnly { get; set; } = "Hard Link работает только с файлами";
+    public string HardLinkSourceNotFound { get; set; } = "Файл источник не найден";
+    public string ItemsAdded { get; set; } = "Добавлено элементов: {0}";
 }
 
 /// <summary>
@@ -53,6 +58,12 @@ public class LocalizationService
     private string _currentLanguage;
     private readonly string _i18nPath;
     private readonly List<string> _missingKeys;
+
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
 
     /// <summary>
     /// Константы ключей локализации для предотвращения опечаток
@@ -90,6 +101,11 @@ public class LocalizationService
         public const string LogSuccess = nameof(LocalizationModel.LogSuccess);
         public const string LogError = nameof(LocalizationModel.LogError);
         public const string LogSummary = nameof(LocalizationModel.LogSummary);
+        public const string JunctionFolderOnly = nameof(LocalizationModel.JunctionFolderOnly);
+        public const string JunctionSourceRequired = nameof(LocalizationModel.JunctionSourceRequired);
+        public const string HardLinkFilesOnly = nameof(LocalizationModel.HardLinkFilesOnly);
+        public const string HardLinkSourceNotFound = nameof(LocalizationModel.HardLinkSourceNotFound);
+        public const string ItemsAdded = nameof(LocalizationModel.ItemsAdded);
     }
 
     private LocalizationService()
@@ -265,7 +281,12 @@ public class LocalizationService
                 LogItemCount = "Элементов: {0}",
                 LogSuccess = "[OK] {0} -> {1}",
                 LogError = "[ERROR] {0} -> {1}",
-                LogSummary = "=== Итог: Успешно {0}, Ошибок {1} ==="
+                LogSummary = "=== Итог: Успешно {0}, Ошибок {1} ===",
+                JunctionFolderOnly = "Junction работает только с папками",
+                JunctionSourceRequired = "Источник должен существовать для Junction",
+                HardLinkFilesOnly = "Hard Link работает только с файлами",
+                HardLinkSourceNotFound = "Файл источник не найден",
+                ItemsAdded = "Добавлено элементов: {0}"
             };
             SaveLocalization(ruPath, ru);
         }
@@ -305,7 +326,12 @@ public class LocalizationService
                 LogItemCount = "Items: {0}",
                 LogSuccess = "[OK] {0} -> {1}",
                 LogError = "[ERROR] {0} -> {1}",
-                LogSummary = "=== Summary: Success {0}, Failed {1} ==="
+                LogSummary = "=== Summary: Success {0}, Failed {1} ===",
+                JunctionFolderOnly = "Junction works only with folders",
+                JunctionSourceRequired = "Source must exist for Junction",
+                HardLinkFilesOnly = "Hard Link works only with files",
+                HardLinkSourceNotFound = "Source file not found",
+                ItemsAdded = "Items added: {0}"
             };
             SaveLocalization(enPath, en);
         }
@@ -316,12 +342,7 @@ public class LocalizationService
     /// </summary>
     private void SaveLocalization(string path, LocalizationModel model)
     {
-        var options = new System.Text.Json.JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        var json = System.Text.Json.JsonSerializer.Serialize(model, options);
+        var json = System.Text.Json.JsonSerializer.Serialize(model, JsonOptions);
         File.WriteAllText(path, json, System.Text.Encoding.UTF8);
     }
 

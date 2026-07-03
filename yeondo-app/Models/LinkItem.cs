@@ -9,7 +9,6 @@ namespace Yeondo.Models;
 public class LinkItem : INotifyPropertyChanged
 {
     private string _sourcePath = string.Empty;
-    private string _linkPath = string.Empty;
     private bool _isDirectory;
     private LinkStatus _status = LinkStatus.Pending;
     private string? _errorMessage;
@@ -34,12 +33,6 @@ public class LinkItem : INotifyPropertyChanged
     {
         get => _sourcePath;
         set => SetField(ref _sourcePath, value);
-    }
-
-    public string LinkPath
-    {
-        get => _linkPath;
-        set => SetField(ref _linkPath, value);
     }
 
     public bool IsDirectory

@@ -6,12 +6,15 @@ namespace Yeondo.Models;
 public class AppSettings
 {
     public string? LastTargetFolder { get; set; }
-    public bool CreateForFiles { get; set; } = true;
-    public bool CreateForDirectories { get; set; } = true;
 
     private static readonly string SettingsPath = System.IO.Path.Combine(
         AppContext.BaseDirectory,
         "settings.json");
+
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true
+    };
 
     public static AppSettings Load()
     {
@@ -20,7 +23,7 @@ public class AppSettings
             if (System.IO.File.Exists(SettingsPath))
             {
                 var json = System.IO.File.ReadAllText(SettingsPath);
-                return System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                return System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
             }
         }
         catch
@@ -34,7 +37,7 @@ public class AppSettings
     {
         try
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(this, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            var json = System.Text.Json.JsonSerializer.Serialize(this, JsonOptions);
             System.IO.File.WriteAllText(SettingsPath, json);
         }
         catch

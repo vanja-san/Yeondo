@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Yeondo.Commands;
 using Yeondo.Models;
 using Yeondo.Services;
 
@@ -19,6 +20,7 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly AppSettings _settings;
     private readonly LocalizationService _localization;
+    private readonly IDialogService _dialogService;
     private string _targetFolder = string.Empty;
     private string _summaryText = string.Empty;
     private string _statusText = string.Empty;
@@ -29,11 +31,22 @@ public class MainViewModel : INotifyPropertyChanged
     private LinkType _selectedLinkType = LinkType.Symbolic;
     private readonly string _logFilePath;
 
+    // Кэшированные команды
+    private readonly ICommand _addFilesCommand;
+    private readonly ICommand _addFoldersCommand;
+    private readonly ICommand _browseTargetCommand;
+    private readonly ICommand _createCommand;
+    private readonly ICommand _clearCommand;
+    private readonly ICommand _openTargetCommand;
+    private readonly ICommand _openLogsCommand;
+    private readonly ICommand _removeItemCommand;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public MainViewModel(LocalizationService? localization = null)
+    public MainViewModel(LocalizationService? localization = null, IDialogService? dialogService = null)
     {
         _localization = localization ?? LocalizationService.Instance;
+        _dialogService = dialogService ?? new DialogService();
         _settings = AppSettings.Load();
         if (!string.IsNullOrEmpty(_settings.LastTargetFolder))
             TargetFolder = _settings.LastTargetFolder;
@@ -42,8 +55,18 @@ public class MainViewModel : INotifyPropertyChanged
         var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
         if (!Directory.Exists(logsDir))
             Directory.CreateDirectory(logsDir);
-        
+
         _logFilePath = Path.Combine(logsDir, $"symlink_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+
+        // Инициализация команд
+        _addFilesCommand = new RelayCommand(AddFiles, () => CanAddItems);
+        _addFoldersCommand = new RelayCommand(AddFolders, () => CanAddItems);
+        _browseTargetCommand = new RelayCommand(BrowseTarget);
+        _createCommand = new AsyncRelayCommand(CreateLinksAsync, () => CanCreate);
+        _clearCommand = new RelayCommand(ClearItems, () => !IsBusy && Items.Count > 0);
+        _openTargetCommand = new RelayCommand(OpenTarget, () => !string.IsNullOrWhiteSpace(TargetFolder) && Directory.Exists(TargetFolder));
+        _openLogsCommand = new RelayCommand(OpenLogs, () => HasErrors && File.Exists(_logFilePath));
+        _removeItemCommand = new RelayCommand<LinkItem>(RemoveItem, _ => !IsBusy);
     }
 
     public ObservableCollection<LinkItem> Items { get; } = [];
@@ -94,14 +117,14 @@ public class MainViewModel : INotifyPropertyChanged
     public bool CanAddItems => !IsBusy;
     public bool CanCreate => !IsBusy && Items.Count > 0 && !string.IsNullOrWhiteSpace(TargetFolder);
 
-    public ICommand AddFilesCommand => new RelayCommand(AddFiles, () => CanAddItems);
-    public ICommand AddFoldersCommand => new RelayCommand(AddFolders, () => CanAddItems);
-    public ICommand BrowseTargetCommand => new RelayCommand(BrowseTarget);
-    public ICommand CreateCommand => new RelayCommand(CreateLinks, () => CanCreate);
-    public ICommand ClearCommand => new RelayCommand(ClearItems, () => !IsBusy && Items.Count > 0);
-    public ICommand OpenTargetCommand => new RelayCommand(OpenTarget, () => !string.IsNullOrWhiteSpace(TargetFolder) && Directory.Exists(TargetFolder));
-    public ICommand OpenLogsCommand => new RelayCommand(OpenLogs, () => HasErrors && File.Exists(_logFilePath));
-    public ICommand RemoveItemCommand => new RelayCommand<LinkItem>(RemoveItem, _ => !IsBusy);
+    public ICommand AddFilesCommand => _addFilesCommand;
+    public ICommand AddFoldersCommand => _addFoldersCommand;
+    public ICommand BrowseTargetCommand => _browseTargetCommand;
+    public ICommand CreateCommand => _createCommand;
+    public ICommand ClearCommand => _clearCommand;
+    public ICommand OpenTargetCommand => _openTargetCommand;
+    public ICommand OpenLogsCommand => _openLogsCommand;
+    public ICommand RemoveItemCommand => _removeItemCommand;
 
     /// <summary>
     /// Проверка, существует ли уже элемент с таким путём
@@ -113,15 +136,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void AddFiles()
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Multiselect = true,
-            Title = _localization.GetString(LocalizationService.Keys.SelectFilesTitle)
-        };
+        var files = _dialogService.ShowOpenFileDialog(
+            _localization.GetString(LocalizationService.Keys.SelectFilesTitle), true);
 
-        if (dialog.ShowDialog() == true)
+        if (files != null)
         {
-            foreach (var file in dialog.FileNames)
+            foreach (var file in files)
             {
                 if (!ItemExists(file))
                 {
@@ -138,15 +158,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void AddFolders()
     {
-        var dialog = new Microsoft.Win32.OpenFolderDialog
-        {
-            Title = _localization.GetString(LocalizationService.Keys.SelectFoldersTitle),
-            Multiselect = true
-        };
+        var folders = _dialogService.ShowOpenFolderDialog(
+            _localization.GetString(LocalizationService.Keys.SelectFoldersTitle), true);
 
-        if (dialog.ShowDialog() == true)
+        if (folders != null)
         {
-            foreach (var folder in dialog.FolderNames)
+            foreach (var folder in folders)
             {
                 if (!ItemExists(folder))
                 {
@@ -163,21 +180,21 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void BrowseTarget()
     {
-        var dialog = new Microsoft.Win32.OpenFolderDialog
-        {
-            Title = _localization.GetString(LocalizationService.Keys.SelectTargetTitle),
-            DefaultDirectory = TargetFolder
-        };
+        var folder = _dialogService.ShowSelectFolderDialog(
+            _localization.GetString(LocalizationService.Keys.SelectTargetTitle),
+            TargetFolder);
 
-        if (dialog.ShowDialog() == true)
+        if (folder != null)
         {
-            TargetFolder = dialog.FolderName;
+            TargetFolder = folder;
         }
     }
 
     private void UpdateSummary()
     {
-        SummaryText = Items.Count > 0 ? $"Добавлено элементов: {Items.Count}" : string.Empty;
+        SummaryText = Items.Count > 0
+            ? string.Format(_localization.GetString(LocalizationService.Keys.ItemsAdded), Items.Count)
+            : string.Empty;
     }
 
     public void AddItems(IEnumerable<string> paths)
@@ -196,7 +213,7 @@ public class MainViewModel : INotifyPropertyChanged
         UpdateSummary();
     }
 
-    private async void CreateLinks()
+    private async Task CreateLinksAsync()
     {
         IsBusy = true;
         _successCount = 0;
@@ -209,96 +226,112 @@ public class MainViewModel : INotifyPropertyChanged
             Directory.CreateDirectory(logDirectory);
 
         // Начинаем лог
+        var currentTargetFolder = TargetFolder; // копируем для фонового потока
+        var items = Items.ToList(); // копируем список
         var logLines = new List<string>
         {
             string.Format(_localization.GetString(LocalizationService.Keys.LogHeader), DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")),
-            string.Format(_localization.GetString(LocalizationService.Keys.LogTargetFolder), TargetFolder),
-            string.Format(_localization.GetString(LocalizationService.Keys.LogItemCount), Items.Count),
+            string.Format(_localization.GetString(LocalizationService.Keys.LogTargetFolder), currentTargetFolder),
+            string.Format(_localization.GetString(LocalizationService.Keys.LogItemCount), items.Count),
             ""
         };
 
         // Очищаем предыдущие статусы
-        foreach (var item in Items)
+        foreach (var item in items)
         {
             item.Status = LinkItem.LinkStatus.Pending;
             item.ErrorMessage = null;
         }
 
-        // Создаём целевую папку если нет
-        if (!Directory.Exists(TargetFolder))
+        // Создаём целевую папку если нет (в UI-потоке для MessageBox)
+        if (!Directory.Exists(currentTargetFolder))
         {
             try
             {
-                Directory.CreateDirectory(TargetFolder);
+                Directory.CreateDirectory(currentTargetFolder);
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show(
+                _dialogService.ShowError(
                     string.Format(_localization.GetString(LocalizationService.Keys.CreateTargetFolderError), ex.Message),
-                    _localization.GetString(LocalizationService.Keys.ErrorTitle),
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Error);
+                    _localization.GetString(LocalizationService.Keys.ErrorTitle));
                 IsBusy = false;
                 return;
             }
         }
 
-        // Создаём ссылки по очереди
-        foreach (var item in Items)
+        // Создаём ссылки в фоновом потоке
+        await Task.Run(() =>
         {
-            item.Status = LinkItem.LinkStatus.InProgress;
+            var selectedType = _selectedLinkType;
 
-            await Task.Delay(50);
-
-            try
+            foreach (var item in items)
             {
-                var linkName = Path.GetFileName(item.SourcePath);
-                var linkPath = Path.Combine(TargetFolder, linkName);
+                // Обновляем статус в UI-потоке
+                App.Current.Dispatcher.Invoke(() => item.Status = LinkItem.LinkStatus.InProgress);
 
-                (bool result, string? error) = SelectedLinkType switch
+                try
                 {
-                    LinkType.Symbolic => CreateSymbolicLink(item, linkPath),
-                    LinkType.Junction => CreateJunctionLink(item, linkPath),
-                    LinkType.HardLink => CreateHardLink(item, linkPath),
-                    _ => (false, _localization.GetString(LocalizationService.Keys.LinkTypeUnknown))
-                };
+                    var linkName = Path.GetFileName(item.SourcePath);
+                    var linkPath = Path.Combine(currentTargetFolder, linkName);
 
-                if (result)
-                {
-                    item.Status = LinkItem.LinkStatus.Success;
-                    _successCount++;
-                    logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogSuccess), item.SourcePath, linkPath));
+                    (bool result, string? error) = selectedType switch
+                    {
+                        LinkType.Symbolic => CreateSymbolicLink(item, linkPath),
+                        LinkType.Junction => CreateJunctionLink(item, linkPath),
+                        LinkType.HardLink => CreateHardLink(item, linkPath),
+                        _ => (false, _localization.GetString(LocalizationService.Keys.LinkTypeUnknown))
+                    };
+
+                    if (result)
+                    {
+                        App.Current.Dispatcher.Invoke(() => item.Status = LinkItem.LinkStatus.Success);
+                        Interlocked.Increment(ref _successCount);
+                        lock (logLines)
+                            logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogSuccess), item.SourcePath, linkPath));
+                    }
+                    else
+                    {
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            item.Status = LinkItem.LinkStatus.Error;
+                            item.ErrorMessage = error;
+                        });
+                        Interlocked.Increment(ref _errorCount);
+                        lock (logLines)
+                            logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogError), item.SourcePath, error));
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    item.Status = LinkItem.LinkStatus.Error;
-                    item.ErrorMessage = error;
-                    _errorCount++;
-                    logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogError), item.SourcePath, error));
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        item.Status = LinkItem.LinkStatus.Error;
+                        item.ErrorMessage = ex.Message;
+                    });
+                    Interlocked.Increment(ref _errorCount);
+                    lock (logLines)
+                        logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogError), item.SourcePath, ex.Message));
                 }
             }
-            catch (Exception ex)
-            {
-                item.Status = LinkItem.LinkStatus.Error;
-                item.ErrorMessage = ex.Message;
-                _errorCount++;
-                logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogError), item.SourcePath, ex.Message));
-            }
-        }
+        });
 
         // Завершение лога
         logLines.Add("");
         logLines.Add(string.Format(_localization.GetString(LocalizationService.Keys.LogSummary), _successCount, _errorCount));
 
-        // Сохраняем лог
-        try
+        // Сохраняем лог (в фоне)
+        await Task.Run(() =>
         {
-            File.WriteAllLines(_logFilePath, logLines);
-        }
-        catch
-        {
-            // Игнорируем ошибки записи лога
-        }
+            try
+            {
+                File.WriteAllLines(_logFilePath, logLines);
+            }
+            catch
+            {
+                // Игнорируем ошибки записи лога
+            }
+        });
 
         UpdateSummaryAfterCreate();
         IsBusy = false;
@@ -344,7 +377,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (Directory.Exists(TargetFolder))
         {
-            System.Diagnostics.Process.Start("explorer.exe", TargetFolder);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(TargetFolder) { UseShellExecute = true });
         }
     }
 
@@ -352,7 +385,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (File.Exists(_logFilePath))
         {
-            System.Diagnostics.Process.Start("notepad.exe", _logFilePath);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_logFilePath) { UseShellExecute = true });
         }
     }
 
@@ -365,25 +398,35 @@ public class MainViewModel : INotifyPropertyChanged
         return NativeMethods.CreateSymbolicLink(linkPath, item.SourcePath, flags);
     }
 
-    private static (bool success, string? error) CreateJunctionLink(LinkItem item, string linkPath)
+    private (bool success, string? error) CreateJunctionLink(LinkItem item, string linkPath)
     {
         if (!item.IsDirectory)
-            return (false, "Junction работает только с папками");
+            return (false, _localization.GetString(LocalizationService.Keys.JunctionFolderOnly));
 
         if (!Directory.Exists(item.SourcePath))
-            return (false, "Источник должен существовать для Junction");
+            return (false, _localization.GetString(LocalizationService.Keys.JunctionSourceRequired));
 
-        int flags = NativeMethods.SYMBOLIC_LINK_FLAG_DIRECTORY | NativeMethods.SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
-        return NativeMethods.CreateSymbolicLink(linkPath, item.SourcePath, flags);
+        // Для Junction нужно сначала создать пустую директорию, затем установить reparse point
+        try
+        {
+            if (!Directory.Exists(linkPath))
+                Directory.CreateDirectory(linkPath);
+
+            return NativeMethods.CreateJunction(linkPath, item.SourcePath);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
     }
 
-    private static (bool success, string? error) CreateHardLink(LinkItem item, string linkPath)
+    private (bool success, string? error) CreateHardLink(LinkItem item, string linkPath)
     {
         if (item.IsDirectory)
-            return (false, "Hard Link работает только с файлами");
+            return (false, _localization.GetString(LocalizationService.Keys.HardLinkFilesOnly));
 
         if (!File.Exists(item.SourcePath))
-            return (false, "Файл источник не найден");
+            return (false, _localization.GetString(LocalizationService.Keys.HardLinkSourceNotFound));
 
         return NativeMethods.CreateHardLink(linkPath, item.SourcePath);
     }
@@ -400,74 +443,5 @@ public class MainViewModel : INotifyPropertyChanged
         field = value;
         OnPropertyChanged(propertyName);
         return true;
-    }
-}
-
-public class RelayCommand(Action execute, Func<bool>? canExecute = null) : ICommand
-{
-    private readonly Action _execute = execute;
-    private readonly Func<bool>? _canExecute = canExecute;
-
-    public event EventHandler? CanExecuteChanged
-    {
-        add => CommandManager.RequerySuggested += value;
-        remove => CommandManager.RequerySuggested -= value;
-    }
-
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
-
-    public void Execute(object? parameter) => _execute();
-}
-
-public class RelayCommand<T>(Action<T?> execute, Func<T?, bool>? canExecute = null) : ICommand
-{
-    private readonly Action<T?> _execute = execute;
-    private readonly Func<T?, bool>? _canExecute = canExecute;
-
-    public event EventHandler? CanExecuteChanged
-    {
-        add => CommandManager.RequerySuggested += value;
-        remove => CommandManager.RequerySuggested -= value;
-    }
-
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke((T?)parameter) ?? true;
-
-    public void Execute(object? parameter) => _execute((T?)parameter);
-}
-
-public static partial class NativeMethods
-{
-    public const int SYMBOLIC_LINK_FLAG_FILE = 0;
-    public const int SYMBOLIC_LINK_FLAG_DIRECTORY = 1;
-    public const int SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 2;
-
-    [System.Runtime.InteropServices.LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = System.Runtime.InteropServices.StringMarshalling.Utf16, EntryPoint = "CreateSymbolicLinkW")]
-    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-    private static partial bool CreateSymbolicLinkNative(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
-
-    [System.Runtime.InteropServices.LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = System.Runtime.InteropServices.StringMarshalling.Utf16, EntryPoint = "CreateHardLinkW")]
-    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-    private static partial bool CreateHardLinkNative(string lpFileName, string lpExistingFileName, IntPtr lpSecurityAttributes);
-
-    public static (bool success, string? error) CreateSymbolicLink(string link, string target, int flags)
-    {
-        bool result = CreateSymbolicLinkNative(link, target, flags);
-        if (!result)
-        {
-            int error = System.Runtime.InteropServices.Marshal.GetLastWin32Error();
-            return (false, new System.ComponentModel.Win32Exception(error).Message);
-        }
-        return (true, null);
-    }
-
-    public static (bool success, string? error) CreateHardLink(string link, string target)
-    {
-        bool result = CreateHardLinkNative(link, target, IntPtr.Zero);
-        if (!result)
-        {
-            int error = System.Runtime.InteropServices.Marshal.GetLastWin32Error();
-            return (false, new System.ComponentModel.Win32Exception(error).Message);
-        }
-        return (true, null);
     }
 }

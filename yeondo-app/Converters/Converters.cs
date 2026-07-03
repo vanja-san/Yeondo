@@ -42,41 +42,6 @@ public class StatusToIconConverter : IValueConverter
     }
 }
 
-public class StatusToColorConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        return value switch
-        {
-            LinkItem.LinkStatus.Pending => Brushes.Gray,
-            LinkItem.LinkStatus.InProgress => Brushes.Orange,
-            LinkItem.LinkStatus.Success => Brushes.Green,
-            LinkItem.LinkStatus.Error => Brushes.Red,
-            _ => Brushes.Gray
-        };
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-public class DetailsVisibilityConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        if (value is string str && str.Contains("[Детали]"))
-            return Visibility.Visible;
-        return Visibility.Collapsed;
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
 public class StringToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
