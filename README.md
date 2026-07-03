@@ -11,7 +11,6 @@ A simple and convenient utility for mass creation of symbolic links in Windows.
 - **Three link types:** Symbolic Link, Junction, Hard Link
 - **Batch creation:** Add files and folders in bulk
 - **Drag & Drop:** Drag files directly into the application window
-- **Auto language detection:** Russian or English interface
 - **Compact UI:** Modern Windows 11 style design
 - **Logging:** Detailed report on link creation results
 
@@ -156,18 +155,14 @@ To view logs, click the **"Logs"** button in the status bar (appears when errors
 
 ## ⚠️ Disclaimer
 
-This application is provided "as is" without any warranties. The author is not responsible for any damages or data losses resulting from the use of this software. Always backup important data before creating symbolic links.
+This application is provided "as is" without any warranties.
+The author is not responsible for any damages or data losses resulting from the use of this software.
+Always backup important data before creating symbolic links.
 
 ## 📄 License
 
 Copyright © 2026 vanja-san. All rights reserved.
 
-**Code written with assistance from Qwen Code (AI Assistant)**
-
-## 🙏 Acknowledgements
-
-- **[Qwen Code](https://github.com/QwenLM/qwen-code)** — AI coding assistant that helped write this application
-
 ---
 
-**Yeondo** — Fast, Convenient, Reliable.
+Made with ❤️!
