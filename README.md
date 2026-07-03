@@ -2,7 +2,7 @@
 
 A simple and convenient utility for mass creation of symbolic links in Windows.
 
-![Version](https://img.shields.io/badge/version-1.10.7-blue)
+![Version](https://img.shields.io/badge/version-1.11.0-blue)
 ![.NET](https://img.shields.io/badge/.NET-10-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-lightgrey)
 
