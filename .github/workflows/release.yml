@@ -25,16 +25,21 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # Версия передаётся во все шаги: build и publish --no-build должны собирать
-    # один и тот же набор бинарников, иначе версия в артефакте не совпадёт с тегом релиза.
+    # Version is passed to every step: build and publish --no-build must produce
+    # the same binaries, otherwise the artifact version will not match the tag.
+    #
+    # The runtime identifier and PublishReadyToRun must be identical in restore,
+    # build, and publish. The csproj enables PublishReadyToRun for Release, so the
+    # restore has to fetch the crossgen2 pack for win-x64; building without the RID
+    # leaves it unresolved and publish --no-build then fails with NETSDK1094.
     - name: Restore dependencies
       run: dotnet restore "yeondo-app/yeondo-app.csproj" -r win-x64 -p:PublishReadyToRun=true -p:Version=${{ github.event.inputs.version }}
 
     - name: Build
-      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore -p:Version=${{ github.event.inputs.version }}
+      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore -r win-x64 -p:PublishReadyToRun=true -p:Version=${{ github.event.inputs.version }}
 
     - name: Publish
-      run: dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-build -p:Version=${{ github.event.inputs.version }}
+      run: dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-build --no-restore -r win-x64 -p:PublishReadyToRun=true -p:Version=${{ github.event.inputs.version }}
 
     - name: Verify artifact version
       shell: pwsh

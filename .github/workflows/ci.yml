@@ -24,34 +24,38 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # Restore обязательно с -r win-x64: в Release задан RuntimeIdentifier, поэтому
-    # публикация падает с NETSDK1047 после restore без RID.
+    # Restore requires -r win-x64 because Release sets RuntimeIdentifier, otherwise
+    # publishing fails with NETSDK1047. It also requires -p:PublishReadyToRun=true:
+    # restore runs under the default Debug configuration, where the csproj does not
+    # enable PublishReadyToRun, so without this flag the crossgen2 pack is never
+    # fetched and a later Release publish fails with NETSDK1094 on a cold cache.
     - name: Restore
-      run: dotnet restore "yeondo-app.slnx" -r win-x64
+      run: dotnet restore "yeondo-app.slnx" -r win-x64 -p:PublishReadyToRun=true
 
-    # --no-incremental обязателен: иначе MSBuild может переиспользовать устаревшие
-    # артефакты и пропустить реальный дефект в только что изменённом коде.
+    # --no-incremental is mandatory: otherwise MSBuild may reuse stale artifacts and
+    # miss a real defect in code that was just changed.
     - name: Build Debug
       run: dotnet build "yeondo-app/yeondo-app.csproj" -c Debug --no-restore --no-incremental
 
     - name: Build Release
-      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore --no-incremental
+      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore --no-incremental -r win-x64 -p:PublishReadyToRun=true
 
     - name: Test
       run: dotnet test "yeondo-app.Tests/yeondo-app.Tests.csproj" -c Debug --no-restore
 
-    # Чистим publish-каталог: иначе проверка локализации прочитает файлы от
-    # предыдущей публикации и сообщит об успехе там, где текущая сборка их не положила.
+    # Wipe the publish directory first, otherwise the localization check reads files
+    # from an earlier publish and reports success where the current build omitted them.
+    # The RID and PublishReadyToRun flags must match the restore above.
     - name: Publish Release
       shell: pwsh
       run: |
         $publishDir = "yeondo-app/bin/Release/net10.0-windows/win-x64/publish"
         if (Test-Path $publishDir) { Remove-Item $publishDir -Recurse -Force }
-        dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-restore --nologo
+        dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-restore --nologo -r win-x64 -p:PublishReadyToRun=true
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    # Файлы перевода должны попасть в публикацию, иначе приложение стартует
-    # на встроенных английских текстах и пользовательские переводы теряются.
+    # Translation files must reach the publish output, otherwise the application
+    # starts with built-in English text and user translations are lost.
     - name: Verify localization files are published
       shell: pwsh
       run: |
