@@ -27,7 +27,7 @@
 	<!-- Единственный источник версии. Значение по умолчанию используется при локальной сборке,
 	     а -p:Version=... (global property) переопределяет его, поэтому AssemblyVersion/FileVersion/
 	     InformationalVersion намеренно не задаются: SDK выводит их из Version сам. -->
-    <Version Condition="'$(Version)' == ''">1.11.0</Version>
+    <Version Condition="'$(Version)' == ''">1.12.0</Version>
     <NeutralLanguage>ru-RU</NeutralLanguage>
     <Copyright>Copyright © 2026 vanja-san</Copyright>
 
