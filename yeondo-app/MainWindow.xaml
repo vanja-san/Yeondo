@@ -20,7 +20,6 @@
         Drop="Window_Drop">
 
     <Window.Resources>
-        <converters:StatusToIconConverter x:Key="StatusToIconConverter"/>
         <converters:FileNameConverter x:Key="FileNameConverter"/>
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <converters:StringHasValueToVisibilityConverter x:Key="StringHasValueToVisibilityConverter"/>
@@ -44,6 +43,7 @@
                 <Button Grid.Column="0"
                         Command="{Binding AddFilesCommand}"
                         ToolTip="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.AddFilesTooltip}"
+                        AutomationProperties.Name="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.AddFilesTooltip}"
                         Margin="0,0,8,0">
                     <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
                                Text="&#xED0E;"
@@ -52,7 +52,8 @@
                 </Button>
                 <Button Grid.Column="1"
                         Command="{Binding AddFoldersCommand}"
-                        ToolTip="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.AddFoldersTooltip}">
+                        ToolTip="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.AddFoldersTooltip}"
+                        AutomationProperties.Name="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.AddFoldersTooltip}">
                     <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
                                Text="&#xE8F4;"
                                FontSize="16"
@@ -95,13 +96,17 @@
                         <vm:LinkType>HardLink</vm:LinkType>
                     </ComboBox.Items>
                 </ComboBox>
-                <!-- Кнопка создания -->
+                <!-- Кнопка создания; во время работы превращается в «Отмена».
+                     Command задаётся только через Style: локальное значение Command
+                     перебивало бы сеттер триггера и отмена не срабатывала бы. -->
                 <Button Grid.Column="3"
-                        Command="{Binding CreateCommand}"
+                        AutomationProperties.Name="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.CreateButton}"
                         Margin="8,0,0,0">
                     <Button.Style>
                         <Style TargetType="Button"
                                 BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Command"
+                                    Value="{Binding CreateCommand}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Items.Count}"
                                         Value="0">
@@ -110,18 +115,44 @@
                                     <Setter Property="IsHitTestVisible"
                                             Value="False"/>
                                 </DataTrigger>
+                                <DataTrigger Binding="{Binding IsBusy}"
+                                        Value="True">
+                                    <Setter Property="Command"
+                                            Value="{Binding CancelCommand}"/>
+                                    <Setter Property="Opacity"
+                                            Value="1.0"/>
+                                    <Setter Property="IsHitTestVisible"
+                                            Value="True"/>
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.CreateButton}"
-                                Margin="0,0,8,0"
-                                VerticalAlignment="Center"/>
-                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                   Text="&#xE72A;"
-                                   FontSize="12"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
+                    <Button.ContentTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,8,0"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text"
+                                                    Value="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.CreateButton}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBusy}"
+                                                        Value="True">
+                                                    <Setter Property="Text"
+                                                            Value="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.CancelButton}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                           Text="&#xE72A;"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </Button.ContentTemplate>
                 </Button>
             </Grid>
         </Border>
@@ -190,6 +221,7 @@
                         Grid.Column="1"
                         Command="{Binding BrowseTargetCommand}"
                         ToolTip="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.BrowseTooltip}"
+                        AutomationProperties.Name="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.BrowseTooltip}"
                         Margin="8,0,0,0">
                     <TextBlock Text="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.BrowseButton}"
                             VerticalAlignment="Center"/>
@@ -199,14 +231,53 @@
         <!-- Блок вывода информации -->
         <Grid Grid.Row="2"
                 Margin="8,0,8,2">
-            <!-- Список элементов с виртуализацией -->
-            <ItemsControl x:Name="ItemsControlInstance"
-                    ItemsSource="{Binding Items}"
-                          VirtualizingStackPanel.IsVirtualizing="True"
-                          VirtualizingStackPanel.VirtualizationMode="Recycling"
-                          ScrollViewer.CanContentScroll="True"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto">
-                <ItemsControl.ItemTemplate>
+            <!-- Список элементов с виртуализацией.
+                 Элемент должен наследоваться от ListBox: только он предоставляет ScrollViewer
+                 с вьюпортом, который требуется VirtualizingStackPanel. У ItemsControl панель
+                 по умолчанию - обычный StackPanel, поэтому прикреплённые свойства
+                 VirtualizingStackPanel.* игнорировались и создавался контейнер на каждый
+                 элемент. Даже явная панель VirtualizingStackPanel внутри ItemsControl
+                 не помогает: без ScrollViewer хоста у панели нет вьюпорта. -->
+            <ListBox x:Name="ItemsList"
+                     ItemsSource="{Binding Items}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="0"
+                     HorizontalContentAlignment="Stretch"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     VirtualizingStackPanel.IsVirtualizing="True"
+                     VirtualizingStackPanel.VirtualizationMode="Recycling"
+                     ScrollViewer.CanContentScroll="True"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <ListBox.ItemContainerStyle>
+                    <!-- Пустой шаблон контейнера: оформление элемента задаёт шаблон данных.
+                         Стиль ListBoxItem по умолчанию добавил бы рамку выделения и отступы,
+                         которых не было у ItemsControl. -->
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding"
+                                Value="0"/>
+                        <Setter Property="Margin"
+                                Value="0"/>
+                        <Setter Property="Background"
+                                Value="Transparent"/>
+                        <Setter Property="BorderThickness"
+                                Value="0"/>
+                        <Setter Property="IsTabStop"
+                                Value="False"/>
+                        <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch"/>
+                        <Setter Property="FocusVisualStyle"
+                                Value="{x:Null}"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter HorizontalAlignment="Stretch"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border x:Name="ItemBorder"
                                 Margin="4,2"
@@ -216,7 +287,7 @@
                             <Border.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="{Binding Source={x:Static services:LocalizationService.Instance}, Path=Resources.RemoveMenuItem}"
-                                              Command="{Binding DataContext.RemoveItemCommand, Source={x:Reference ItemsControlInstance}}"
+                                              Command="{Binding DataContext.RemoveItemCommand, Source={x:Reference ItemsList}}"
                                               CommandParameter="{Binding}"/>
                                 </ContextMenu>
                             </Border.ContextMenu>
@@ -326,8 +397,8 @@
                             </Grid>
                         </Border>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </Grid>
         <!-- Статусбар -->
         <Border Grid.Row="3"

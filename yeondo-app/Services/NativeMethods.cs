@@ -20,8 +20,8 @@ public static partial class NativeMethods
   private const uint FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000;
   private const uint FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
   private const uint OPEN_EXISTING = 3;
-  private const uint FILE_READ_EA = 0x0008;
-  private const uint FILE_WRITE_EA = 0x0010;
+  // FSCTL_SET_REPARSE_POINT requires write access to the directory handle, not only EA access.
+  private const uint GENERIC_WRITE = 0x40000000;
   private const uint FILE_SHARE_READ = 0x00000001;
   private const uint FILE_SHARE_WRITE = 0x00000002;
 
@@ -89,7 +89,7 @@ public static partial class NativeMethods
     {
       hDir = CreateFileNative(
           junctionPath,
-          FILE_READ_EA | FILE_WRITE_EA,
+          GENERIC_WRITE,
           FILE_SHARE_READ | FILE_SHARE_WRITE,
           IntPtr.Zero,
           OPEN_EXISTING,

@@ -23,14 +23,16 @@
 	<AssemblyCopyright>Copyright © 2026 vanja-san</AssemblyCopyright>
 	<AssemblyCompany>vanja-san</AssemblyCompany>
 	<AssemblyProduct>Yeondo</AssemblyProduct>
-	<AssemblyVersion>1.11.0.0</AssemblyVersion>
-	<FileVersion>1.11.0.0</FileVersion>
-	<InformationalVersion>1.11.0</InformationalVersion>
 
-	<!-- Метаданные для Win32 ресурса версии -->
-	<Version>1.11.0.0</Version>
-	<NeutralLanguage>ru-RU</NeutralLanguage>
-	<Copyright>Copyright © 2026 vanja-san</Copyright>
+	<!-- Единственный источник версии. Значение по умолчанию используется при локальной сборке,
+	     а -p:Version=... (global property) переопределяет его, поэтому AssemblyVersion/FileVersion/
+	     InformationalVersion намеренно не задаются: SDK выводит их из Version сам. -->
+    <Version Condition="'$(Version)' == ''">1.11.0</Version>
+    <NeutralLanguage>ru-RU</NeutralLanguage>
+    <Copyright>Copyright © 2026 vanja-san</Copyright>
+
+    <!-- Лицензия проекта: Apache-2.0 — свободная, с явной защитой патентных требований. -->
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
 
   <!-- Настройки для Debug -->
@@ -60,8 +62,15 @@
     <Resource Include="Assets\app.ico" />
   </ItemGroup>
 
+  <!-- Файлы локализации поставляются вместе с приложением: пользователь может править их,
+       а при повреждении сервис откатывается на встроенные английские значения. -->
   <ItemGroup>
-    <Content Include="i18n\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="i18n\**\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Тесты обращаются к internal-хелперам MainViewModel (вывод имени ссылки, сравнение путей). -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="yeondo-app.Tests" />
   </ItemGroup>
 
 </Project>

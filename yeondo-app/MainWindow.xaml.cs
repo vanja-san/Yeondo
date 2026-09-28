@@ -29,7 +29,11 @@ public partial class MainWindow : Window
 
     private void Window_DragOver(object sender, DragEventArgs e)
     {
-        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        var viewModel = DataContext as ViewModels.MainViewModel;
+
+        // Во время создания ссылок список закрыт снимком, поэтому показываем
+        // запрет вместо курсора копирования.
+        if (e.Data.GetDataPresent(DataFormats.FileDrop) && viewModel is { IsBusy: false })
         {
             e.Effects = DragDropEffects.Copy;
         }

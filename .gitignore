@@ -31,8 +31,11 @@ bld/
 
 # Local application files (created at runtime)
 settings.json
-i18n/
 logs/
+
+# i18n/ is intentionally NOT ignored: translation files ship with the application.
+# Ignoring it left an empty folder in the build output, and translations had to be
+# written to disk at runtime, which fell back to English on read-only media.
 
 # Release notes
 RELEASE_NOTES.md

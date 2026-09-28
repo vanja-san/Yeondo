@@ -22,26 +22,6 @@ public class FileNameConverter : IValueConverter
     }
 }
 
-public class StatusToIconConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        return value switch
-        {
-            LinkItem.LinkStatus.Pending => "\uE7C8",      // Часы
-            LinkItem.LinkStatus.InProgress => "\uE72C",   // Вращение
-            LinkItem.LinkStatus.Success => "\uE73E",      // Галочка
-            LinkItem.LinkStatus.Error => "\uE711",        // Крестик
-            _ => "\uE7C8"
-        };
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
 public class StringToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

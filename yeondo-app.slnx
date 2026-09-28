@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="yeondo-app/yeondo-app.csproj" />
+  <Project Path="yeondo-app.Tests/yeondo-app.Tests.csproj" />
 </Solution>

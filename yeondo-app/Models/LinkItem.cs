@@ -44,7 +44,11 @@ public class LinkItem : INotifyPropertyChanged
     public LinkStatus Status
     {
         get => _status;
-        set => SetField(ref _status, value);
+        set
+        {
+            if (SetField(ref _status, value))
+                OnPropertyChanged(nameof(IsProcessing));
+        }
     }
 
     public string? ErrorMessage
@@ -53,7 +57,7 @@ public class LinkItem : INotifyPropertyChanged
         set => SetField(ref _errorMessage, value);
     }
 
-    public bool IsProcessing => Status == LinkStatus.InProgress;
+    public bool IsProcessing => _status == LinkStatus.InProgress;
 
     public enum LinkStatus
     {

@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
 
 jobs:
   build:
@@ -27,14 +25,41 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
+    # Версия передаётся во все шаги: build и publish --no-build должны собирать
+    # один и тот же набор бинарников, иначе версия в артефакте не совпадёт с тегом релиза.
     - name: Restore dependencies
-      run: dotnet restore "yeondo-app/yeondo-app.csproj" -r win-x64 -p:PublishReadyToRun=true
+      run: dotnet restore "yeondo-app/yeondo-app.csproj" -r win-x64 -p:PublishReadyToRun=true -p:Version=${{ github.event.inputs.version }}
 
     - name: Build
-      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore
+      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore -p:Version=${{ github.event.inputs.version }}
 
     - name: Publish
       run: dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-build -p:Version=${{ github.event.inputs.version }}
+
+    - name: Verify artifact version
+      shell: pwsh
+      run: |
+        $publishDir = "yeondo-app/bin/Release/net10.0-windows/win-x64/publish"
+        $exe = Join-Path $publishDir "Yeondo.exe"
+        if (-not (Test-Path $exe)) {
+          Write-Error "Yeondo.exe not found in $publishDir"
+          exit 1
+        }
+
+        $expected = "${{ github.event.inputs.version }}"
+        $actual = (Get-Item $exe).VersionInfo.FileVersion
+        Write-Host "Expected file version: $expected"
+        Write-Host "Actual file version:   $actual"
+
+        # FileVersion дополняется нулями до четырёх частей (например 1.2.3 -> 1.2.3.0)
+        $expectedFull = $expected
+        while (($expectedFull -split '\.').Count -lt 4) { $expectedFull = "$expectedFull.0" }
+
+        if ($actual -ne $expectedFull) {
+          Write-Error "Version mismatch: expected $expectedFull, got $actual"
+          exit 1
+        }
+        Write-Host "Version verified: $actual"
 
     - name: Create Release Archive
       shell: pwsh
@@ -49,7 +74,10 @@ jobs:
         Move-Item -Path "$zipName" -Destination "release/$zipName" -Force
 
         Copy-Item -Path "README.md" -Destination "release/" -Force
-        Copy-Item -Path "README.ru.md" -Destination "release/" -Force
+
+        # Apache-2.0 требует отправлять текст лицензии и NOTICE с каждым релизом.
+        Copy-Item -Path "LICENSE" -Destination "release/" -Force
+        Copy-Item -Path "NOTICE" -Destination "release/" -Force
 
         Write-Host "Created: $zipName"
         Write-Host "Files in release folder:"
@@ -60,7 +88,9 @@ jobs:
       shell: pwsh
       run: |
         $currentTag = "v${{ github.event.inputs.version }}"
-        $previousTag = git describe --tags --abbrev=0 HEAD^ 2>$null
+        # HEAD^ не существует на самом первом коммите, поэтому stderr скрываем и
+        # результат обрезаем: пробелы испортили бы диапазон "$previousTag..HEAD".
+        $previousTag = (git describe --tags --abbrev=0 HEAD^ 2>$null | Out-String).Trim()
         if ($previousTag) {
           Write-Host "Previous tag: $previousTag"
           echo "tag=$previousTag" >> $env:GITHUB_OUTPUT
@@ -99,9 +129,19 @@ jobs:
         name: Yeondo v${{ github.event.inputs.version }}
         body: |
           ## Changes since ${{ steps.previous_tag.outputs.tag || 'initial release' }}
-          
+
           ${{ steps.changelog.outputs.changelog }}
-          
+
+          ---
+          ## License
+
+          Yeondo is free and open source, released under the **Apache License 2.0**
+          (SPDX: `Apache-2.0`). The full license text and the `NOTICE` file are included
+          in the archive.
+
+          Contributions are welcome. You may use, modify, and redistribute this software
+          in commercial or closed-source products; no copyleft obligation applies.
+
           ---
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.previous_tag.outputs.tag || '' }}...v${{ github.event.inputs.version }}
         draft: false

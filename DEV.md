@@ -20,7 +20,7 @@ Documentation for development, building, and publishing the application.
 |-----------|---------------------|
 | **Framework** | .NET 10 |
 | **UI** | WPF (Windows Presentation Foundation) |
-| **Language** | C# 13 |
+| **Language** | C# 14 |
 | **Architecture** | MVVM (Model-View-ViewModel) |
 | **Win32 API** | P/Invoke (LibraryImport) |
 | **Styles** | Fluent Design (Windows 11) |
@@ -31,34 +31,36 @@ Documentation for development, building, and publishing the application.
 
 ```
 yeondo-app/
-├── yeondo-app/
-│   ├── App.xaml(.cs)           # Entry point, Single Instance
-│   ├── MainWindow.xaml(.cs)    # Main window
-│   ├── AssemblyInfo.cs         # Assembly metadata
-│   │
-│   ├── ViewModels/
-│   │   └── MainViewModel.cs    # Main application logic
-│   │
-│   ├── Models/
-│   │   ├── LinkItem.cs         # Link item model
-│   │   └── AppSettings.cs      # Application settings
-│   │
-│   ├── Converters/
-│   │   ├── Converters.cs       # Value converters
-│   │   └── LocConverter.cs     # Localization converter
-│   │
-│   ├── Services/
-│   │   └── LocalizationService.cs  # Localization service
-│   │
-│   ├── Assets/
-│   │   └── app.ico             # Application icon
-│   │
-│   └── yeondo-app.csproj       # Project file
+├── App.xaml(.cs)              # Entry point, single instance
+├── MainWindow.xaml(.cs)       # Main window
+├── AssemblyInfo.cs            # Assembly metadata
+├── yeondo-app.csproj          # Project file
 │
-├── README.md                   # User documentation (EN)
-├── README.ru.md                # User documentation (RU)
-├── DEVELOPMENT.md              # This file (EN)
-└── DEVELOPMENT.ru.md           # Dev documentation (RU)
+├── Commands/
+│   └── RelayCommand.cs        # ICommand implementations (sync + async)
+│
+├── ViewModels/
+│   └── MainViewModel.cs       # Main application logic
+│
+├── Models/
+│   ├── LinkItem.cs            # Link item model
+│   └── AppSettings.cs         # Application settings
+│
+├── Converters/
+│   └── Converters.cs          # Value converters
+│
+├── Services/
+│   ├── NativeMethods.cs       # P/Invoke: symlink, junction, hard link
+│   ├── LocalizationService.cs # Localization service
+│   ├── IDialogService.cs      # Dialog abstraction
+│   └── DialogService.cs       # WPF dialog implementation
+│
+├── i18n/                      # Translation files (en.json, ru.json)
+│
+└── Assets/
+    └── app.ico                # Application icon
+
+DEV.md                          # This file
 ```
 
 ---
@@ -126,10 +128,14 @@ dotnet publish "yeondo-app/yeondo-app.csproj" -c Release
 
 ### Size comparison
 
+`Release` sets `SelfContained` and `PublishSingleFile` unconditionally, so a Release
+publish is always self-contained. A framework-dependent output only exists when those
+properties are overridden (for example by publishing `Debug`).
+
 | Publishing type | Size | Requires .NET |
 |-----------------|------|---------------|
-| Self-contained (compressed) | ~66 MB | ❌ No |
-| Framework-dependent | ~200 KB | ✅ Yes |
+| Release, self-contained single-file | ~66.6 MB | ❌ No |
+| Debug, framework-dependent | ~1.0 MB (7 files) | ✅ Yes |
 
 ---
 
@@ -260,7 +266,7 @@ protected override void OnStartup(StartupEventArgs e)
 }
 ```
 
-### Collection Expressions (.NET 13)
+### Collection Expressions (C# 12)
 
 ```csharp
 // Before
@@ -311,10 +317,11 @@ SYMBOLIC_LINK_FLAG_DIRECTORY = 1                   // Folder link
 
 | Metric | Value |
 |--------|-------|
-| Lines of code | ~1500 |
-| Files | ~15 |
-| Classes | ~10 |
-| Publish size | 66 MB |
+| C# files | 12 |
+| C# lines of code | 1607 |
+| Types (classes/interfaces/records/enums) | 22 |
+| Tracked project files | 16 |
+| Publish size (Release, self-contained) | ~66.6 MB |
 | Launch time | < 1 sec |
 
 ---

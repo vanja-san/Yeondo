@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+# Только чтение: CI не создаёт релизы и не коммитит ничего.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.0.x'
+
+    # Restore обязательно с -r win-x64: в Release задан RuntimeIdentifier, поэтому
+    # публикация падает с NETSDK1047 после restore без RID.
+    - name: Restore
+      run: dotnet restore "yeondo-app.slnx" -r win-x64
+
+    # --no-incremental обязателен: иначе MSBuild может переиспользовать устаревшие
+    # артефакты и пропустить реальный дефект в только что изменённом коде.
+    - name: Build Debug
+      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Debug --no-restore --no-incremental
+
+    - name: Build Release
+      run: dotnet build "yeondo-app/yeondo-app.csproj" -c Release --no-restore --no-incremental
+
+    - name: Test
+      run: dotnet test "yeondo-app.Tests/yeondo-app.Tests.csproj" -c Debug --no-restore
+
+    # Чистим publish-каталог: иначе проверка локализации прочитает файлы от
+    # предыдущей публикации и сообщит об успехе там, где текущая сборка их не положила.
+    - name: Publish Release
+      shell: pwsh
+      run: |
+        $publishDir = "yeondo-app/bin/Release/net10.0-windows/win-x64/publish"
+        if (Test-Path $publishDir) { Remove-Item $publishDir -Recurse -Force }
+        dotnet publish "yeondo-app/yeondo-app.csproj" -c Release --no-restore --nologo
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    # Файлы перевода должны попасть в публикацию, иначе приложение стартует
+    # на встроенных английских текстах и пользовательские переводы теряются.
+    - name: Verify localization files are published
+      shell: pwsh
+      run: |
+        $publishDir = "yeondo-app/bin/Release/net10.0-windows/win-x64/publish"
+        $expected = @("en.json", "ru.json")
+        foreach ($name in $expected) {
+          $path = Join-Path $publishDir "i18n/$name"
+          if (-not (Test-Path $path)) {
+            Write-Error "Missing translation file: $path"
+            exit 1
+          }
+          try {
+            Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json | Out-Null
+          } catch {
+            Write-Error "Invalid JSON in $path : $($_.Exception.Message)"
+            exit 1
+          }
+          Write-Host "OK: $name"
+        }
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: Yeondo-ci-${{ github.sha }}
+        path: yeondo-app/bin/Release/net10.0-windows/win-x64/publish/
+        retention-days: 14
