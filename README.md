@@ -1,239 +1,91 @@
-# Yeondo — Symbolic Link Creator
+<div align="center">
 
-A simple and convenient utility for mass creation of symbolic links in Windows.
+<h1>Yeondo</h1>
+<p>Mass creator of symbolic links, junctions, and hard links for Windows.</p>
 
-![Version](https://img.shields.io/badge/version-1.12.0-blue)
-![.NET](https://img.shields.io/badge/.NET-10-purple)
-![Platform](https://img.shields.io/badge/platform-Windows%20x64-lightgrey)
+<p>
+  <img src="https://img.shields.io/badge/version-1.12.0-blue" alt="Version 1.12.0" />
+  <img src="https://img.shields.io/badge/.NET-10-purple" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/platform-Windows%20x64-lightgrey" alt="Windows x64" />
+</p>
 
-## 📌 Features
+<img width="235" alt="Main window" src="https://github.com/user-attachments/assets/daa8ea4a-2874-4397-9223-e10f1ea9279f" />
+<img width="235" alt="Item list" src="https://github.com/user-attachments/assets/23ce2ecd-0df2-4e20-9174-091f6b51249d" />
+<img width="235" alt="Status" src="https://github.com/user-attachments/assets/10e117ab-6012-4337-ab32-94064cd5b2d1" />
 
-- **Three link types:** Symbolic Link, Junction, Hard Link
-- **Batch creation:** Add files and folders in bulk
-- **Drag & Drop:** Drag files directly into the application window
-- **Compact UI:** Modern Windows 11 style design
-- **Logging:** Detailed report on link creation results
+</div>
 
-## 🚀 Quick Start
+## Features
 
-### 1. Installation
+- **Three link types** — symbolic, junction, hard link
+- **Batch processing** — thousands of files and folders in one run
+- **Drag & drop** — drop items straight onto the window
+- **Cancellable** — the Create button turns into Cancel; finished links are kept
+- **Grouped failures** — errors are summarized by cause instead of repeated hundreds of times
+- **Logging** — every run writes a detailed report
+- **Localized** — English and Russian, with user-editable files
 
-Download and extract the application archive to any folder.
+## Quick Start
 
-**Requirements:**
-- Windows 10/11 x64
-- .NET 10 Desktop Runtime *(if using version without bundled runtime)*
+1. Download the archive, extract it anywhere, and run `Yeondo.exe`.
+2. Add items with the 📄 / 📁 buttons, or drag them onto the window.
+3. Pick a link type, choose a target folder, press **Create**.
 
-### 2. Launch
+`Enter` creates the run when the button is active; right-click an item for its context menu.
+If a run is cancelled, links already created stay in place and the rest are skipped.
 
-Run `Yeondo.exe`
+## Link Types
 
-### 3. Create a Link
+| Type | Works with | Notes |
+|------|-----------|-------|
+| **Symbolic** | Files & folders | Needs Administrator, or Developer Mode enabled |
+| **Junction** | Folders only | No privileges required |
+| **Hard link** | Files only | Source must exist, same NTFS volume only |
 
-1. **Add files or folders:**
-   - Click 📄 (files) or 📁 (folders) button
-   - Or drag files into the application window
+## Localization
 
-2. **Select link type:**
-   - **Symbolic** — universal links (files and folders)
-   - **Junction** — folders only
-   - **Hard Link** — files only
+The interface follows the system language. Translations live in `i18n/` next to the
+executable — edit `en.json` or `ru.json` freely, no tools required.
 
-3. **Specify target folder:**
-   - Click "Browse" and select destination folder
-   - Or click the path to open it in Explorer
+To add a language, drop a `{code}.json` file into `i18n/` using `en.json` as the template.
+Missing keys fall back to the built-in English text, so partial files are safe: the
+interface stays readable instead of going blank. The same fallback applies if a file is
+deleted, unreadable, or not valid JSON — the application still starts.
 
-4. **Click "Create"**
-   - While links are being created the button turns into **"Cancel"** — click it to stop
-     the run. Items already created are kept; the rest stay untouched.
-   - If some items fail, a summary dialog groups the reasons by count so repeated
-     Windows errors are not listed hundreds of times. Full details go to the log.
+All application files (settings, translations, logs) stay next to the executable. Nothing
+is written to system folders, so the app works from a read-only location.
 
----
+## Troubleshooting
 
-## 📸 Screenshots
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Hard link fails | Source is on another volume | Hard links only work inside one NTFS volume |
+| Junction fails | A file was selected | Junctions accept folders only |
+| *Access denied* | No privilege for symbolic links | Run as Administrator or enable Developer Mode — junctions need neither |
+| *Link name already used* | Two sources share a file name, e.g. `A\report.txt` and `B\report.txt` | Rename one, or run them separately; the first is still created |
+| *Cannot derive a link name* | A drive or share root was selected (`C:\`, `\\server\share\`) | Select a folder inside it instead |
+| Won't start | .NET 10 Desktop Runtime missing | Install it from [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/10.0) |
 
-<img width="248" alt="Main" src="https://github.com/user-attachments/assets/daa8ea4a-2874-4397-9223-e10f1ea9279f" /> 
-<img width="248" alt="List" src="https://github.com/user-attachments/assets/23ce2ecd-0df2-4e20-9174-091f6b51249d" />
-<img width="248" alt="Status" src="https://github.com/user-attachments/assets/10e117ab-6012-4337-ab32-94064cd5b2d1" />
+Logs for every run are written to `logs/symlink_YYYYMMDD_HHMMSS.log`; the **Logs** button in
+the status bar appears when there is something to show.
 
----
+## Disclaimer
 
-## 📖 Link Types
+**No warranty or liability.** Yeondo is provided "as is" with no warranty of any kind
+(Apache-2.0 §7), and the author is not liable for damage arising from its use (§8).
 
-| Type | For | Features |
-|------|-----|----------|
-| **Symbolic** | Files & Folders | Works like a shortcut, requires admin privileges (without Developer Mode) |
-| **Junction** | Folders only | Works at filesystem level, no admin required |
-| **Hard Link** | Files only | File must exist, works only within same NTFS volume |
+**No affiliation.** An independent project — not affiliated with, endorsed by, or sponsored
+by Microsoft or any other company. Windows, NTFS, and .NET are trademarks of their respective
+owners, used only to state compatibility; Apache-2.0 grants no trademark rights (§6).
 
-## ⌨️ Hotkeys
+**Links affect the whole system, not just this app.** Hard links share file data, so editing
+one path changes all of them. Junctions and symbolic links are followed transparently by any
+program, so scanners, sync tools, backup software, and cleaners can reach data outside the
+folder you pointed them at. Deleting a link is normally safe, but a path that was replaced
+by one keeps resolving to the link target until the link itself is removed.
 
-| Action | Keys |
-|--------|------|
-| Add files | — |
-| Add folders | — |
-| Create links | Enter (when button is active) |
-| Open context menu | Right mouse button on item |
-
-## 🌐 Localization
-
-The application automatically detects the system language:
-
-- **Russian** — if system language is Russian
-- **English** — for all other languages
-
-Localization files are stored in the `i18n/` folder next to the executable:
-
-- `ru.json` — Russian language
-- `en.json` — English language
-
-You can edit these files to customize interface texts.
-
-### Adding a Custom Language
-
-To add your own language:
-
-1. Create a file `i18n/{code}.json` (e.g., `fr.json` for French)
-2. Copy the structure from `en.json`
-3. Translate the values
-
-**Example (fr.json):**
-```json
-{
-  "AppTitle": "Yeondo - Créateur de liens symboliques",
-  "AddFilesTooltip": "Ajouter des fichiers",
-  "CreateButton": "Créer",
-  "OutputPathLabel": "Chemin de sortie",
-  "SelectPath": "Non sélectionné",
-  ...
-}
-```
-
-Any key you omit falls back to its built-in English text, so a partial file is safe — the
-interface stays readable instead of showing blanks or a crash.
-
-**Full key list (44):**
-
-`AppTitle`, `AddFilesTooltip`, `AddFoldersTooltip`, `CreateButton`, `CancelButton`,
-`OutputPathLabel`, `SelectPath`, `BrowseButton`, `BrowseTooltip`, `ClearButton`,
-`LogsButton`, `ReadyStatus`, `CreatedCount`, `FailedCount`, `SuccessMessage`,
-`RemoveMenuItem`, `OpenFolderTooltip`, `SelectFilesTitle`, `SelectFoldersTitle`,
-`SelectTargetTitle`, `ErrorTitle`, `CreateTargetFolderError`, `LinkTypeSymbolic`,
-`LinkTypeJunction`, `LinkTypeHardLink`, `LinkTypeUnknown`, `LogHeader`, `LogTargetFolder`,
-`LogItemCount`, `LogSuccess`, `LogError`, `LogSummary`, `LogCancelled`, `StatusCancelled`,
-`JunctionFolderOnly`, `JunctionSourceRequired`, `HardLinkFilesOnly`,
-`HardLinkSourceNotFound`, `LinkNameUnavailable`, `LinkNameConflict`, `FailureSummaryTitle`,
-`FailureReasonLine`, `FailureSummaryHint`, `ItemsAdded`
-
-If the file is missing, unreadable, or not valid JSON, the built-in English texts are used
-and the interface starts normally.
+**Back up anything important before creating links, and use at your own risk.**
 
 ---
 
-## ❓ Troubleshooting
-
-### Hard Link Creation Error
-
-**Cause:** File is on a different volume or drive.
-
-**Solution:** Hard Link works only within a single NTFS volume.
-
----
-
-### Junction Creation Error
-
-**Cause:** A file was selected instead of a folder.
-
-**Solution:** Junction works only with folders.
-
----
-
-### "Access Denied" Error
-
-**Cause:** Insufficient privileges to create symbolic links.
-
-**Solution:** Run the application as Administrator or enable "Developer Mode" in Windows 10/11.
-Junctions do not need Administrator.
-
----
-
-### "Another selected item already has this link name"
-
-**Cause:** Two selected sources have the same file name — for example `A\report.txt` and
-`B\report.txt`. A link name is taken from the source name only, so both would land on the
-same path.
-
-**Solution:** Split them into separate runs, or rename one of them beforehand. The first
-item is still created; the conflicting one is skipped and reported.
-
----
-
-### "Cannot derive a link name from this path"
-
-**Cause:** A drive or share root was selected (`C:\`, `\\server\share\`). These have no name
-component, so there is nothing to name the link after.
-
-**Solution:** Select a folder inside it rather than the root itself.
-
----
-
-### Application Won't Start
-
-**Cause:** .NET 10 Runtime is not installed.
-
-**Solution:** Download and install [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
-
-## 📝 Logging
-
-Log files are created next to the application:
-```
-./logs/symlink_YYYYMMDD_HHMMSS.log
-```
-
-To view logs, click the **"Logs"** button in the status bar (appears when errors occur).
-
-**All application files (settings, localization, logs) are created next to the executable** — no system folders!
-
-## ⚠️ Disclaimer
-
-**No warranty.** This application is provided "as is", without warranty of any kind, either
-express or implied, including but not limited to the warranties of merchantability, fitness
-for a particular purpose, and non-infringement. This mirrors sections 7 and 8 of the Apache
-License 2.0, which governs this program.
-
-**No liability.** To the maximum extent permitted by applicable law, the author and
-copyright holders shall not be liable for any claim, damages, or other liability — whether in
-an action of contract, tort, or otherwise — arising from, out of, or in connection with the
-software or its use.
-
-**No affiliation.** Yeondo is an independent project created by an individual contributor.
-It is not affiliated with, associated with, endorsed by, sponsored by, or supervised by
-Microsoft Corporation or any other company, organization, or individual. If you use this
-software, you do so on your own initiative and at your own risk; the author cannot be held
-responsible for how third parties use or distribute it.
-
-**Trademarks.** Windows, NTFS, .NET, and other product and company names mentioned in this
-document are the trademarks or registered trademarks of their respective owners. They are
-used only to identify the platforms and technologies this software is compatible with. The
-Apache License 2.0 grants no permission to use the names or logos of the author or
-contributors, as noted in section 6 of that license.
-
-**Use at your own risk.** Yeondo creates filesystem links, and these are visible to the whole
-system, not just to this application:
-
-- **Hard links** make several paths point to the same file data. Editing a file through one
-  path changes it for all of them.
-- **Junctions and symbolic links** are followed transparently by other programs. Software
-  that scans, synchronizes, backs up, or deletes files may traverse them and act on data
-  outside the folder you pointed them at.
-- Removing a link is usually safe, but a path that was replaced by a junction or symbolic
-  link will keep resolving to the new target until the link itself is deleted.
-
-Before creating links over existing or important data, **make a backup**. The author cannot
-be responsible for data loss, corrupted files, or damage caused by other software following
-these links.
-
----
-
-Made with ❤️!
+Apache-2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
